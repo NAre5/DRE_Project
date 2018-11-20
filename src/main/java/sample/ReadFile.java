@@ -55,8 +55,8 @@ public class ReadFile implements Runnable {
             String title = TitleElement.text();
             String text = TextElement.text();
             cDocument cDoc = new cDocument(ID, title, text);
-//            DocumentBuffer.getInstance().getBuffer().add(cDoc);
-            pool.execute(()->Parse.parse(cDoc.text));
+            DocumentBuffer.getInstance().getBuffer().add(cDoc);
+            pool.execute(parser);
         }
         return null;
     }

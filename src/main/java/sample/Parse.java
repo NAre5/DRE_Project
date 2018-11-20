@@ -1055,7 +1055,7 @@ public class Parse implements Runnable {
     public Parse() {
 //        File file = new File(ClassLoader.getSystemResource("stop_words.txt").getFile());
         //TODO change the resource
-        File file = new File("C:/Users/micha/OneDrive/מסמכים/intelliJ/DRE_Project/Resources/stop_words.txt");
+        File file = new File(ClassLoader.getSystemResource("stop_words.txt").getPath());
         BufferedReader br = null;
         try {
             br = new BufferedReader(new FileReader(file));
