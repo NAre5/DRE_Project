@@ -20,7 +20,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="DRE_Project" target="1.5" />
+      <module name="DRE_Project" target="8" />
     </bytecodeTargetLevel>
   </component>
 </project>
