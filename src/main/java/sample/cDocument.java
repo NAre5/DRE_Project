@@ -1,5 +1,7 @@
 package sample;
 
+import java.util.List;
+
 public class cDocument {
     public String ID;
     public String title;
@@ -7,6 +9,7 @@ public class cDocument {
     public int max_tf;
     public int number_of_unique_terms;
     public String city;
+    public List<String> terms;
 
     public cDocument(String ID,String title, String text) {
         this.ID = ID;

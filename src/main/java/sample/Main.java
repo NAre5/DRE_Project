@@ -25,7 +25,7 @@ public class Main extends Application {
 //        pool.execute(new ReadFile("C:\\Users\\micha\\Desktop\\corpus"));
 //        pool.execute(new Parse());
         long starttime = System.currentTimeMillis();
-        ReadFile rf= new ReadFile("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\corpus");
+        ReadFile rf= new ReadFile("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\corpus",new Parse());
 //        Parse parse = new Parse();
         Thread t1 = new Thread(rf);
 //        Thread t4 = new Thread(rf);
