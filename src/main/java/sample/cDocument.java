@@ -1,5 +1,6 @@
 package sample;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class cDocument {
@@ -9,7 +10,7 @@ public class cDocument {
     public int max_tf;
     public int number_of_unique_terms;
     public String city;
-    public List<String> terms;
+    public HashMap<String,Integer> terms = new HashMap<>();
 
     public cDocument(String ID,String title, String text) {
         this.ID = ID;

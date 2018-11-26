@@ -16,7 +16,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Parse{
+public class Parse {
     public static void main(String[] args) {
         long start = System.currentTimeMillis();
         File file = new File("C:\\Users\\erant\\Desktop\\STUDIES\\Third_Year\\אחזור\\search engine\\corpus\\corpus\\FB396001");
@@ -44,10 +44,12 @@ public class Parse{
         }
         p.parse(docElements.size());
 //        System.out.println("main");
-        System.out.println(System.currentTimeMillis()-start);
+        System.out.println(System.currentTimeMillis() - start);
     }
+
     ExecutorService pool = Executors.newCachedThreadPool();
     static HashSet<String> stopWords = new HashSet<>();
+
     static {
         File file = new File(ClassLoader.getSystemResource("stop_words.txt").getPath());
         BufferedReader br = null;
@@ -1104,9 +1106,9 @@ public class Parse{
 //
 //    }
 
-    static AtomicLong sum=new AtomicLong(0);
-    public void parse(int size)
-    {
+    static AtomicLong sum = new AtomicLong(0);
+
+    public void parse(int size) {
         List<Future<cDocument>> futures = new ArrayList<>();
         cDocument document;
         for (int i = 0; i < size; i++) {
@@ -1361,7 +1363,8 @@ class Parser implements Callable<cDocument> {
     @Override
     public cDocument call() {
         String[] tokens = document.text.split("\n|\\s+");
-        ArrayList<String> ans = new ArrayList<>();
+//        ArrayList<String> ans = new ArrayList<>();
+
         String term = "";
         for (int i = 0; i < tokens.length; i++) {
             if (tokens[i].equals(""))
@@ -1397,9 +1400,13 @@ class Parser implements Callable<cDocument> {
                 term = tokens[i] + tokens[++i] + tokens[++i] + tokens[++i];
             else
                 term = tokens[i];
-            ans.add(term);
+//            ans.add(term);
+            if (!document.terms.containsKey(term))
+                document.terms.put(term, 1);
+            else {
+                document.terms.put(term, document.terms.get(term)+1);
+            }
         }
-        document.terms=ans;
         return document;
 //        System.out.println(Arrays.toString(ans.toArray()));
     }
