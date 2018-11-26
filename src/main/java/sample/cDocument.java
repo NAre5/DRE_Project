@@ -12,7 +12,7 @@ public class cDocument {
     public String city;
     public HashMap<String,Integer> terms = new HashMap<>();
 
-    public cDocument(String ID,String title, String text) {
+    public cDocument(String ID, String title, String text) {
         this.ID = ID;
         this.title = title;
         this.text = text;
