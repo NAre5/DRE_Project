@@ -6,6 +6,9 @@ import java.nio.file.FileAlreadyExistsException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Indexer {
     //    public HashMap<Indexer,HashSet<String>> ddd;
@@ -54,5 +57,20 @@ public class Indexer {
 
 
     }
-}
 
+    class file_db implements Runnable{
+        File db_file;
+        Queue<String> queue = new ConcurrentLinkedQueue<>();
+
+        public file_db(File db_file)
+        {
+            this.db_file = db_file;
+        }
+
+
+        @Override
+        public void run() {
+
+        }
+    }
+}

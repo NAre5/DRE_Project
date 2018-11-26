@@ -15,7 +15,7 @@ public class DocumentBuffer {
     }
 
     private DocumentBuffer() {
-        documentBuffer = new LinkedBlockingQueue<>();
+        documentBuffer = new ConcurrentLinkedQueue<>();
     }
 
     public static Queue<cDocument> getBuffer()

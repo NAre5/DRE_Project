@@ -1,6 +1,10 @@
 package sample;
 
 import javafx.util.Pair;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -9,8 +13,39 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Parse{
+    public static void main(String[] args) {
+        long start = System.currentTimeMillis();
+        File file = new File("C:\\Users\\erant\\Desktop\\STUDIES\\Third_Year\\אחזור\\search engine\\corpus\\corpus\\FB396001");
+        Document document = null;
+        Parse p = new Parse();
+        try {
+            document = Jsoup.parse(new String(Files.readAllBytes(file.listFiles()[0].toPath())));
+        } catch (IOException e) {
+            e.printStackTrace();
+//            System.out.println("---------------read line 44-------------------");
+        }
+        Elements docElements = document.getElementsByTag("DOC");
+
+        for (Element element : docElements) {
+            Document documentFromElement = Jsoup.parse(new String(element.toString()));
+            Elements IDElement = documentFromElement.getElementsByTag("DOCNO");
+            Elements TitleElement = documentFromElement.getElementsByTag("TI");
+            Elements TextElement = documentFromElement.getElementsByTag("TEXT");
+            String ID = IDElement.text();
+            String title = TitleElement.text();
+            String text = TextElement.text();
+            cDocument cDoc = new cDocument(ID, title, text);
+            DocumentBuffer.getInstance().getBuffer().add(cDoc);
+//            pool.execute(parser);
+        }
+        p.parse(docElements.size());
+//        System.out.println("main");
+        System.out.println(System.currentTimeMillis()-start);
+    }
     ExecutorService pool = Executors.newCachedThreadPool();
     static HashSet<String> stopWords = new HashSet<>();
     static {
@@ -1069,6 +1104,7 @@ public class Parse{
 //
 //    }
 
+    static AtomicLong sum=new AtomicLong(0);
     public void parse(int size)
     {
         List<Future<cDocument>> futures = new ArrayList<>();
@@ -1078,7 +1114,7 @@ public class Parse{
             Future<cDocument> fpd = pool.submit(new Parser(document));
             futures.add(fpd);
         }
-
+//        System.out.println("1112");
         cDocument pd;
         List<cDocument> documents = new ArrayList<>();
         for (int i = 0; i < size; i++) {
@@ -1089,7 +1125,9 @@ public class Parse{
                 e.printStackTrace();
             }
         }
-
+//        System.out.println("1123");
+//        long start = System.currentTimeMillis();
+        /*
         HashMap<String,List<Object>> dictionary = new HashMap<>();
         HashMap<String,List<Object>> dictionary_stem = new HashMap<>();
         HashMap<String,List<Object>> dictionary_cities = new HashMap<>();
@@ -1115,8 +1153,8 @@ public class Parse{
                 if (!ddictionary_stem.containsKey(sterm))
                     ddictionary_stem.put(sterm,1);
                 else{
-                    Integer temp = ddictionary_stem.get(term);
-                    ddictionary_stem.put(term,temp+1);
+                    Integer temp = ddictionary_stem.get(sterm);
+                    ddictionary_stem.put(sterm,temp+1);
                 }
             }
             for (String t : ddictionary.keySet()) {
@@ -1130,11 +1168,14 @@ public class Parse{
                 dictionary_stem.get(t).add(new Pair<>(doc.ID,ddictionary_stem.get(t)));
             }
         }
+//        long end = System.currentTimeMillis();
+//        long s = sum.addAndGet(end-start);
+//        System.out.println(s);
 
-
-
+//        System.out.println("1164");
 
 //        pool.shutdown(); //Todo check when to close
+*/
     }
 //    public static void parse(String document) {
 //        String[] tokens = document.split("\n|\\s+");
@@ -1358,6 +1399,7 @@ class Parser implements Callable<cDocument> {
                 term = tokens[i];
             ans.add(term);
         }
+        document.terms=ans;
         return document;
 //        System.out.println(Arrays.toString(ans.toArray()));
     }
