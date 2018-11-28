@@ -33,8 +33,8 @@ public class ReadFile {
 
     public void readFiles() {
         syncObject = new Object();
+        count.addAndGet(files_list.length);
         for (File file : this.files_list) {
-            count.addAndGet(1);
             pool.execute(new Reader(file));
         }
         synchronized (syncObject) {
@@ -77,10 +77,25 @@ public class ReadFile {
                 Elements IDElement = element.getElementsByTag("DOCNO");
                 Elements TitleElement = element.getElementsByTag("TI");
                 Elements TextElement = element.getElementsByTag("TEXT");
+                Elements fElements = element.getElementsByTag("F");
+                String city = "";
+                String language = "";
+
+                for (Element fElement : fElements) {
+                    if (fElement.attr("P").equals("104")) {
+                        city = fElement.text();
+                        //Todo more about the city (restcountries.eu API)
+                    }
+                    else if(fElement.attr("P").equals("105"))
+                        language = fElement.text();
+                }
+
                 String ID = IDElement.text();
                 String title = TitleElement.text();
                 String text = TextElement.text();
                 cDocument cDoc = new cDocument(ID, title, text);
+                cDoc.city = city;
+                cDoc.language = language;
                 docToParse[placeInDoc++] = cDoc;
             }
             parser.parse(docToParse);

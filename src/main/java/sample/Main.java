@@ -25,7 +25,7 @@ public class Main extends Application {
 //        pool.execute(new ReadFile("C:\\Users\\micha\\Desktop\\corpus"));
 //        pool.execute(new Parse());
         long starttime = System.currentTimeMillis();
-        ReadFile rf= new ReadFile("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\corpus",new Parse());
+        ReadFile rf= new ReadFile("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\corpus",new Parse());
         rf.readFiles();
         System.out.println("The time is " + (System.currentTimeMillis()-starttime)/1000);
 
