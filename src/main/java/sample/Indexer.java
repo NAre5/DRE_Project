@@ -20,8 +20,10 @@ public class Indexer {
     //    public HashMap<Indexer,HashSet<String>> ddd;
     String d_path;//directory path
     HashMap<String, Integer> dictionary;
-    private ExecutorService pool = Executors.newFixedThreadPool(28);;
-    private ExecutorService doAndex_pool= Executors.newFixedThreadPool(8);;//Executors.newCachedThreadPool();
+    private ExecutorService pool = Executors.newFixedThreadPool(28);
+    ;
+    private ExecutorService doAndex_pool = Executors.newCachedThreadPool();
+    ;//Executors.newCachedThreadPool();
     HashMap<String, File_db> mapper = new HashMap<>();//filename to file_db thread
 
     public Indexer(String diretory_name) throws FileAlreadyExistsException {
@@ -35,7 +37,7 @@ public class Indexer {
         File file;
         File_db fdb;
         for (char c = 'a'; c <= 'z'; c++) {
-            file = new File(dir, c+"");
+            file = new File(dir, c + "");
             try {
                 b = file.createNewFile();//remove b=
             } catch (IOException e) {
@@ -68,10 +70,10 @@ public class Indexer {
     }
 
     public void doAndexing(cDocument document) {
-        doAndex_pool.execute(new doAndex(this,document));
+        doAndex_pool.execute(new doAndex(this, document));
     }
 
-    class doAndex implements Runnable{
+    class doAndex implements Runnable {
         Indexer indexer;
         cDocument document;
 
@@ -86,26 +88,31 @@ public class Indexer {
         }
     }
 
+    public void stopIndexing() {
+        doAndex_pool.shutdown();
+        for (File_db file_db : mapper.values()) {
+            file_db.stopRunning();
+        }
+        pool.shutdown();
+    }
+
     public void andex(cDocument document) {
         Object[][] objects = new Object[][]{};
 //        if (document.city != null)
 //            mapper.get("cities").queue.add(new Pair<>(document.city, objects));
-        if(document.ID.equals("shutdown"))
-        {
-            doAndex_pool.shutdown();
-            objects = new Object[][]{{"","shutdown"},{}};
-            for (File_db file_db : mapper.values()) {
-                file_db.queue.add(new Pair<>("",objects));
-            }
-            pool.shutdown();
-            return;
-        }
+//        if (document.ID.equals("shutdown")) {
+//
+//            return;
+//        }
         for (String term : document.terms.keySet()) {
             objects = new Object[][]{{document.ID, 3}, {document.terms.get(term), 2}};
             try {
                 String first = term.toLowerCase().substring(0, 1);
                 String key = (mapper.containsKey(first)) ? first : "_";
                 mapper.get(key).queue.add(new Pair<>(term, objects));
+                synchronized (mapper.get(key).syncObject) {
+                    mapper.get(key).syncObject.notify();
+                }
             } catch (Exception e) {
                 System.out.println("but why?");
             }
@@ -129,13 +136,16 @@ public class Indexer {
     private static final Integer LINE_SIZE = 9; // +1 for \n
 
 
-
     class File_db implements Runnable {
         File db_file;
-        HashMap<String, Integer> firstTermLine = new HashMap<>();
+        //        HashMap<String, Integer> firstTermLine = new HashMap<>();
+//        HashMap<String, Integer> df = new HashMap<>();
+        HashMap<String, Integer[]> firstTermLine_df = new HashMap<>();
+
         HashMap<String, Integer> lastTermLine = new HashMap<>();
-        HashMap<String, Integer> df = new HashMap<>();
         HashMap<String, Integer> docIDMap = new HashMap<>();
+        final Object syncObject = new Object();
+        private volatile boolean running = true;
 
         Integer next_line = 0;
 
@@ -157,43 +167,38 @@ public class Indexer {
 
         @Override
         public void run() {
-            while (true) {
+            while (running) {
                 Pair<String, Object[][]> pair = queue.poll();//if null? if error?//always first is docID
-                if (pair == null)
-                    continue;
-                if(pair.getValue()[0][1].toString().equals("shutdown"))
-                    break;
-                Object docno = null;
-                try {
-                    docno = pair.getValue()[0][0];
-                } catch (Exception e) {
-                    System.out.println("but why?");
-                }
-//                Integer currentID;
-                try {
-                    if ((pair.getValue()[0][0] = docIDMap.get(docno.toString())) == null) {
-                        int file_id = docIDMap.size();
-                        docIDMap.put(docno.toString(), docIDMap.size());//TODO check docno.toString()
-                        pair.getValue()[0][0] = file_id;
+                if (pair == null) {
+                    synchronized (syncObject) {
+                        try {
+                            syncObject.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
-                } catch (Exception e) {
-                    System.out.println("but why?");
+                    continue;
                 }
-
+                Object docno = pair.getValue()[0][0];
+//                Integer currentID;
+                if ((pair.getValue()[0][0] = docIDMap.get(docno.toString())) == null) {
+                    int file_id = docIDMap.size();
+                    docIDMap.put(docno.toString(), docIDMap.size());//TODO check docno.toString()
+                    pair.getValue()[0][0] = file_id;
+                }
 
                 String term = pair.getKey();
-                df.put(term, df.getOrDefault(term, 0) + 1);//TODO check
-                Integer ll;
-                if ((ll = lastTermLine.get(term)) != null) {
-                    //insert
+                if (!firstTermLine_df.containsKey(term)) {
+                    firstTermLine_df.put(term, new Integer[]{next_line, 1});
+                } else {
+                    firstTermLine_df.get(term)[1] += 1;
+                    Integer ll = lastTermLine.get(term);
                     try {
                         raFile.seek((ll * LINE_SIZE) + 5);//TODO check that seek is from the start of the file
-                        raFile.write(intToBytes(3, next_line));
+                        raFile.write(intToBytes(3, next_line++));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                } else {
-                    firstTermLine.put(term, next_line);
                 }
                 lastTermLine.put(term, next_line++);
                 try {
@@ -213,12 +218,27 @@ public class Indexer {
 //                break;//TODO DELETE The break;
                 //gaps?//
             }
-            MapSaver.save(firstTermLine, db_file.getPath()+ "firstTermLine");
-            MapSaver.save(df, db_file.getPath()+ "df");
-            MapSaver.saveReverse(docIDMap, db_file.toPath()+ "docIDMap");
+            System.out.println("first times up for " + db_file.getName());
+            MapSaver.saveDuo(firstTermLine_df, db_file.getPath() + "firstTermLine");
+//            MapSaver.save(df, db_file.getPath() + "df");
+            MapSaver.saveReverse(docIDMap, db_file.toPath() + "docIDMap");
+            System.out.println("second times up for " + db_file.getName());
 
-//            raFile.close();//Todo michael fix like ATP
-//            writer.close();
+            try {
+                raFile.close();//Todo michael fix like ATP
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                foStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void stopRunning()//TODO check no corrupting running
+        {
+            running = false;
         }
     }
 }

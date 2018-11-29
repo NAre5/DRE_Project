@@ -85,7 +85,8 @@ public class Parse {
             }
         }
         if (count.decrementAndGet() == 0) {
-            indexer.doAndexing(new cDocument("shutdown", null, null));
+//            indexer.doAndexing(new cDocument("shutdown", null, null));
+            indexer.stopIndexing();
             doParse_pool.shutdown();
         }
 //        long start = System.currentTimeMillis();
@@ -340,7 +341,7 @@ public class Parse {
             } catch (Exception ignore) {//if the map empty
             }
 
-            document.stem_dictionary(new Stemmer());
+//            document.stem_dictionary(new Stemmer());
             return document;
 //        System.out.println(Arrays.toString(ans.toArray()));
         }
