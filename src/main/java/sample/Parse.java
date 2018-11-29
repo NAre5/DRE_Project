@@ -1,22 +1,17 @@
 package sample;
 
-import javafx.util.Pair;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Parse {
-    ExecutorService pool = Executors.newCachedThreadPool();
+    ExecutorService parsers_pool = Executors.newCachedThreadPool();
+    ExecutorService doParse_pool = Executors.newCachedThreadPool();
     static HashSet<String> stopWords = new HashSet<>();
+    AtomicInteger count = new AtomicInteger(0);
 
     static {
         File file = new File(ClassLoader.getSystemResource("stop_words.txt").getPath());
@@ -33,36 +28,65 @@ public class Parse {
 
     static AtomicLong sum = new AtomicLong(0);
 
-//    Indexer indexer;
-//    {
-//        StringBuilder name = new StringBuilder("michael");
-//        while (true) {
-//            try {
-//                indexer = new Indexer(name.toString());
-//                break;
-//            } catch (FileAlreadyExistsException e) {
-//                name.append('a');
-//            }
-//        }
-//    }
+    Indexer indexer;
+
+    {
+        StringBuilder name = new StringBuilder("michael");
+        while (true) {
+            try {
+                indexer = new Indexer(name.toString());
+                break;
+            } catch (FileAlreadyExistsException e) {
+                name.append('a');
+            }
+        }
+    }
+
+    public Parse(int length) {
+        count.addAndGet(length);
+    }
+
+    public void doParsing(cDocument[] cDocuments) {
+        doParse_pool.execute(new doParse(this, cDocuments));
+
+    }
+
+    class doParse implements Runnable {
+        Parse parse;
+        cDocument[] cDocuments;
+
+        public doParse(Parse parse, cDocument[] cDocuments) {
+            this.parse = parse;
+            this.cDocuments = cDocuments;
+        }
+
+        @Override
+        public void run() {
+            parse.parse(cDocuments);
+        }
+    }
 
     public void parse(cDocument[] docs) {
         Future<cDocument>[] futures = new Future[docs.length];
         cDocument document;
         for (int i = 0; i < docs.length; i++) {
             document = docs[i];
-            Future<cDocument> fpd = pool.submit(new Parser(document));
+            Future<cDocument> fpd = parsers_pool.submit(new Parser(document));
             futures[i] = fpd;
         }
         cDocument pd;
         cDocument[] documents = new cDocument[docs.length];
         for (int i = 0; i < docs.length; i++) {
             try {
-                documents[i] = futures[i].get();
-//                indexer.andex(pd);
+//                documents[i] = ;
+                indexer.doAndexing(futures[i].get());
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
+        }
+        if (count.decrementAndGet() == 0) {
+            indexer.doAndexing(new cDocument("shutdown", null, null));
+            doParse_pool.shutdown();
         }
 //        long start = System.currentTimeMillis();
 //
@@ -111,9 +135,10 @@ public class Parse {
 
 //        System.out.println("1164");
 
-//        pool.shutdown(); //Todo check when to close
+//        parsers_pool.shutdown(); //Todo check when to close
 
     }
+
 
     public static boolean isDoubleNumber(String str) {
         try {
@@ -240,12 +265,13 @@ public class Parse {
             str = str.substring(0, str.length() - 1);
         return str;
     }
-    public static boolean isSimpleTerm(String term)
-    {
-        if(term.startsWith("$")||Date.MonthToNumberOfDays.containsKey(term)||Character.isDigit(term.charAt(0))||term.toLowerCase().equals("between"))
+
+    public static boolean isSimpleTerm(String term) {
+        if (term.startsWith("$") || Date.MonthToNumberOfDays.containsKey(term) || Character.isDigit(term.charAt(0)) || term.toLowerCase().equals("between"))
             return false;
         return true;
     }
+
 
 //    @Override/
 
@@ -258,14 +284,14 @@ public class Parse {
 
         @Override
         public cDocument call() {
-            String[] tokens = document.text.replaceAll("[.,][ \n\t\"]|[\"+^:\t*!\\\\@#=`~;)(?><}{_\\[\\]]", " ").replaceAll("'(s|t|mon|d|ll|m|ve|re|)","").split("\n|\\s+");
+            String[] tokens = document.text.replaceAll("\\.\\.+", ". ").replaceAll("[\\.,][ \n\t\"]|[\\|\"+^:\t*!\\\\@#=`~;)(?><}{_\\[\\](--)]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").split("\n|\\s+");
 //        ArrayList<String> ans = new ArrayList<>();
             String term = "";
             int tokenLength = tokens.length;
             for (int i = 0; i < tokenLength; i++) {
                 if (tokens[i].equals("") || stopWords.contains(tokens[i].toLowerCase()))
                     continue;
-                if(isSimpleTerm(tokens[i]))
+                if (isSimpleTerm(tokens[i]))
                     term = tokens[i];
                 else if (tokens[i].startsWith("$") && isDoubleNumber(tokens[i].replace("\\$", ""))) {
                     String[] splitted = tokens[i].split("((?<=\\$)|(?=\\$))|\\-");
@@ -274,14 +300,14 @@ public class Parse {
                     } else
                         term = parsePrice(splitted[0], splitted[1]);
 
-                }else if(tokens[i].endsWith("%"))
-                    term=parsePrecent(tokens[i].split("((?<=%)|(?=%))"));
+                } else if (tokens[i].endsWith("%"))
+                    term = parsePrecent(tokens[i].split("((?<=%)|(?=%))"));
                 else if (Parse.isDoubleNumber(tokens[i]))///check minus number
                 {
                     if (i + 1 < tokenLength && tokens[i + 1].matches("Dollars"))
                         term = Parse.parsePrice(tokens[i], Parse.cleanToken(tokens[++i]));
-                    else if(i + 1 < tokenLength && tokens[i + 1].toLowerCase().matches("percent|percentage"))
-                        term = parsePrecent(tokens[i],tokens[++i]);
+                    else if (i + 1 < tokenLength && tokens[i + 1].toLowerCase().matches("percent|percentage"))
+                        term = parsePrecent(tokens[i], tokens[++i]);
                     else if (i + 1 < tokenLength && Parse.isFraction(tokens[i + 1]) && i + 2 < tokenLength && tokens[i + 2].equals("Dollars"))
                         term = Parse.parsePrice(tokens[i], Parse.cleanToken(tokens[++i]), Parse.cleanToken(tokens[++i]));
                     else if (i + 1 < tokenLength && tokens[i + 1].matches("m|bn") && i + 2 < tokenLength && tokens[i + 2].equals("Dollars"))
@@ -309,7 +335,10 @@ public class Parse {
                 }
             }
 
-            document.max_tf = Collections.max(document.terms.values());
+            try {
+                document.max_tf = Collections.max(document.terms.values());
+            } catch (Exception ignore) {//if the map empty
+            }
 
             document.stem_dictionary(new Stemmer());
             return document;

@@ -21,11 +21,11 @@ public class Main extends Application {
 //        primaryStage.setTitle("Hello World");
 //        primaryStage.setScene(new Scene(root, 300, 275));
 //        primaryStage.show();
-//        ExecutorService pool = Executors.newCachedThreadPool();
-//        pool.execute(new ReadFile("C:\\Users\\micha\\Desktop\\corpus"));
-//        pool.execute(new Parse());
+//        ExecutorService parsers_pool = Executors.newCachedThreadPool();
+//        parsers_pool.execute(new ReadFile("C:\\Users\\micha\\Desktop\\corpus"));
+//        parsers_pool.execute(new Parse());
         long starttime = System.currentTimeMillis();
-        ReadFile rf= new ReadFile("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\corpus",new Parse());
+        ReadFile rf= new ReadFile("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\corpus");
         rf.readFiles();
         System.out.println("The time is " + (System.currentTimeMillis()-starttime)/1000);
 

@@ -24,10 +24,10 @@ public class ReadFile {
     private static AtomicInteger count = new AtomicInteger(0);
 
 
-    public ReadFile(String path, Parse parser) {
-        this.parser = parser;
+    public ReadFile(String path) {
         File corpus = new File(path);
         files_list = corpus.listFiles();
+        parser = new Parse(files_list.length);
         pool = Executors.newFixedThreadPool(8);
     }
 
@@ -43,6 +43,7 @@ public class ReadFile {
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
+
                 pool.shutdown();
             }
         }
@@ -98,7 +99,7 @@ public class ReadFile {
                 cDoc.language = language;
                 docToParse[placeInDoc++] = cDoc;
             }
-            parser.parse(docToParse);
+            parser.doParsing(docToParse);
             count.getAndDecrement();
             if (count.get() == 0) {
                 synchronized (syncObject) {
