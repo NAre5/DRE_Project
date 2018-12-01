@@ -25,9 +25,10 @@ public class ReadFile {
 
 
     public ReadFile(String path) {
+//        File corpus = new File(ClassLoader.getSystemResource("corpus").getPath());
         File corpus = new File(path);
         files_list = corpus.listFiles();
-        parser = new Parse(files_list.length);
+        parser = new Parse(files_list.length, corpus.getName());
         pool = Executors.newFixedThreadPool(8);
     }
 
@@ -86,8 +87,7 @@ public class ReadFile {
                     if (fElement.attr("P").equals("104")) {
                         city = fElement.text();
                         //Todo more about the city (restcountries.eu API)
-                    }
-                    else if(fElement.attr("P").equals("105"))
+                    } else if (fElement.attr("P").equals("105"))
                         language = fElement.text();
                 }
 

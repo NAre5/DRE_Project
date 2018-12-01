@@ -15,6 +15,7 @@ public class Parse {
 
     static {
         File file = new File(ClassLoader.getSystemResource("stop_words.txt").getPath());
+        //TODO replace this section
         BufferedReader br = null;
         try {
             br = new BufferedReader(new FileReader(file));
@@ -24,14 +25,30 @@ public class Parse {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        //
     }
 
     static AtomicLong sum = new AtomicLong(0);
 
     Indexer indexer;
 
-    {
-        StringBuilder name = new StringBuilder("michael");
+//    {
+//        StringBuilder name = new StringBuilder(corpusName+"michael");
+//        while (true) {
+//            try {
+//                indexer = new Indexer(name.toString());
+//                break;
+//            } catch (FileAlreadyExistsException e) {
+//                name.append('a');
+//            }
+//        }
+//    }
+
+
+
+    public Parse(int length, String corpusName) {
+        count.addAndGet(length);
+        StringBuilder name = new StringBuilder(corpusName+"michael");
         while (true) {
             try {
                 indexer = new Indexer(name.toString());
@@ -40,10 +57,6 @@ public class Parse {
                 name.append('a');
             }
         }
-    }
-
-    public Parse(int length) {
-        count.addAndGet(length);
     }
 
     public void doParsing(cDocument[] cDocuments) {
@@ -86,6 +99,11 @@ public class Parse {
         }
         if (count.decrementAndGet() == 0) {
 //            indexer.doAndexing(new cDocument("shutdown", null, null));
+//            try {
+//                Thread.sleep(2000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
             indexer.stopIndexing();
             doParse_pool.shutdown();
         }
@@ -268,7 +286,7 @@ public class Parse {
     }
 
     public static boolean isSimpleTerm(String term) {
-        if (term.startsWith("$") || Date.MonthToNumberOfDays.containsKey(term) || Character.isDigit(term.charAt(0)) || term.toLowerCase().equals("between"))
+        if (term.startsWith("$") || Date.MonthToNumberOfDays.containsKey(term.toUpperCase()) || Character.isDigit(term.charAt(0)) || term.toLowerCase().equals("between"))
             return false;
         return true;
     }
@@ -292,6 +310,8 @@ public class Parse {
             for (int i = 0; i < tokenLength; i++) {
                 if (tokens[i].equals("") || stopWords.contains(tokens[i].toLowerCase()))
                     continue;
+                if (tokens[i].toLowerCase().equals("blocks"))
+                    System.out.println("ff1");
                 if (isSimpleTerm(tokens[i]))
                     term = tokens[i];
                 else if (tokens[i].startsWith("$") && isDoubleNumber(tokens[i].replace("\\$", ""))) {

@@ -56,17 +56,16 @@ public class Indexer {
         fdb = new File_db(file);
         mapper.put("_", fdb);
         pool.execute(fdb);
-        pool.execute(new File_db(file));
-        file = new File(dir, "cities");
-        try {
-            b = file.createNewFile();//remove b=
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        fdb = new File_db(file);
-        mapper.put("cities", fdb);
-        pool.execute(fdb);
-        pool.execute(new File_db(file));
+//        file = new File(dir, "cities");
+//        try {
+//            b = file.createNewFile();//remove b=
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        fdb = new File_db(file);
+//        mapper.put("cities", fdb);
+//        pool.execute(fdb);
+//        pool.execute(new File_db(file));
     }
 
     public void doAndexing(cDocument document) {
@@ -91,6 +90,11 @@ public class Indexer {
     public void stopIndexing() {
         doAndex_pool.shutdown();
         for (File_db file_db : mapper.values()) {
+            /////////////////////////////////Todo notify
+            synchronized (file_db.syncObject) {
+                file_db.syncObject.notify();
+            }
+            ///////////////////////////////////////////
             file_db.stopRunning();
         }
         pool.shutdown();
@@ -105,6 +109,8 @@ public class Indexer {
 //            return;
 //        }
         for (String term : document.terms.keySet()) {
+            if (term.toLowerCase().equals("blocks"))
+                System.out.println("ff2");
             objects = new Object[][]{{document.ID, 3}, {document.terms.get(term), 2}};
             try {
                 String first = term.toLowerCase().substring(0, 1);
@@ -136,16 +142,15 @@ public class Indexer {
     private static final Integer LINE_SIZE = 9; // +1 for \n
 
 
-    class File_db implements Runnable {
+    class File_db implements Runnable,Serializable {
         File db_file;
         //        HashMap<String, Integer> firstTermLine = new HashMap<>();
 //        HashMap<String, Integer> df = new HashMap<>();
-        HashMap<String, Integer[]> firstTermLine_df = new HashMap<>();
-
-        HashMap<String, Integer> lastTermLine = new HashMap<>();
-        HashMap<String, Integer> docIDMap = new HashMap<>();
-        final Object syncObject = new Object();
-        private volatile boolean running = true;
+        transient HashMap<String, Integer[]> firstTermLine_df = new HashMap<>();
+        transient HashMap<String, Integer> lastTermLine = new HashMap<>();
+        transient HashMap<String, Integer> docIDMap = new HashMap<>();
+        transient final Object syncObject = new Object();
+        transient private volatile boolean running = true;
 
         Integer next_line = 0;
 
@@ -179,18 +184,40 @@ public class Indexer {
                     }
                     continue;
                 }
+
+                //map document to doc id
                 Object docno = pair.getValue()[0][0];
-//                Integer currentID;
                 if ((pair.getValue()[0][0] = docIDMap.get(docno.toString())) == null) {
                     int file_id = docIDMap.size();
                     docIDMap.put(docno.toString(), docIDMap.size());//TODO check docno.toString()
                     pair.getValue()[0][0] = file_id;
                 }
 
+                //
                 String term = pair.getKey();
+
+                boolean _case = false;
+                if (Character.isLowerCase(term.charAt(0)))
+                    term = term.toLowerCase();
+                else {
+                    _case = true;
+                    term = term.toUpperCase();
+                }
+
                 if (!firstTermLine_df.containsKey(term)) {
                     firstTermLine_df.put(term, new Integer[]{next_line, 1});
                 } else {
+                    if (!_case) {
+                        Integer[] ft_df;
+                        if ((ft_df = firstTermLine_df.remove(term.toUpperCase())) != null) {//maybe replace to containsKey
+                            firstTermLine_df.put(term, ft_df);
+                        }
+                    } else {
+                        if (firstTermLine_df.containsKey(term.toLowerCase()))
+                            term = term.toLowerCase();
+                    }
+
+
                     firstTermLine_df.get(term)[1] += 1;
                     Integer ll = lastTermLine.get(term);
                     try {
@@ -219,7 +246,7 @@ public class Indexer {
                 //gaps?//
             }
             System.out.println("first times up for " + db_file.getName());
-            MapSaver.saveDuo(firstTermLine_df, db_file.getPath() + "firstTermLine");
+            MapSaver.saveDuo(firstTermLine_df, db_file.getPath() + "firstTermLine_df");
 //            MapSaver.save(df, db_file.getPath() + "df");
             MapSaver.saveReverse(docIDMap, db_file.toPath() + "docIDMap");
             System.out.println("second times up for " + db_file.getName());

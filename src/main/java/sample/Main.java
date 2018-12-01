@@ -24,8 +24,10 @@ public class Main extends Application {
 //        ExecutorService parsers_pool = Executors.newCachedThreadPool();
 //        parsers_pool.execute(new ReadFile("C:\\Users\\micha\\Desktop\\corpus"));
 //        parsers_pool.execute(new Parse());
+
+        //TODO Jsoup.parse("<text>ë</text>").getElementsByTag("text").text()
         long starttime = System.currentTimeMillis();
-        ReadFile rf= new ReadFile("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\tcorpus");
+        ReadFile rf= new ReadFile("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\tcorpus10_first");
         rf.readFiles();
         System.out.println("The time is " + (System.currentTimeMillis()-starttime)/1000);
 
