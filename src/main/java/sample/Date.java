@@ -3,6 +3,11 @@ package sample;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class hekp to the parser. we save in this class to maps.
+ * DateToDateNum - map from month name and is short write to the number of the month
+ * MonthToNumberOfDays - map from month to the numbers if days he have
+ */
 public class Date {
     public static Map<String,String> DateToDateNum =new HashMap<String,String>();
     static {

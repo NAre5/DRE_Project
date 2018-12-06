@@ -9,29 +9,54 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * This class has the responsibility to get the corpus and splite the file into documents.
+ */
 public class ReadFile {
+    /**
+     * list of files
+     */
     File[] files_list = null;
     Parse parser;
+    /**
+     * pool of thread that rin read function
+     */
     private ExecutorService pool;
+    /**
+     * use to sync the read file
+     */
     private Object syncObject;
+    /**
+     * nunber if reader that done
+     */
     private static AtomicInteger count = new AtomicInteger(0);
+    /**
+     * all languages from the corpus
+     */
+    TreeSet<String> languages = new TreeSet<>();
 
-
-    public ReadFile(String path) {
-//        File corpus = new File(ClassLoader.getSystemResource("corpus").getPath());
-        File corpus = new File(path);
+    /**
+     * c'tor
+     *
+     * @param corpusPath    - the path of corpus with files
+     * @param stopWordsPath - the path for stop words
+     * @param postingOut    - the path to directory we wrute the posting files.
+     * @param ifStem        - if to do stem
+     */
+    public ReadFile(String corpusPath, String stopWordsPath, String postingOut, boolean ifStem) {
+        File corpus = new File(corpusPath);
         files_list = corpus.listFiles();
-        parser = new Parse(files_list.length, corpus.getName());
+        parser = new Parse(corpusPath, stopWordsPath, postingOut, ifStem);
         pool = Executors.newFixedThreadPool(8);
     }
 
+    /**
+     * This function  read the file  by send each file to thread
+     */
     public void readFiles() {
         syncObject = new Object();
         count.addAndGet(files_list.length);
@@ -43,13 +68,19 @@ public class ReadFile {
                 syncObject.wait();
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-
+            } finally {//when all threads are done
+                parser.indexer.writeRestRecords();//write the rest of documents
+                parser.indexer.sortFiles();
                 pool.shutdown();
+                parser.parsers_pool.shutdown();
             }
         }
     }
 
+    /**
+     * This class is thread that get file, split hum to documents by JSOUP and send them to parse thread
+     * All the jsoup code will esplain in the report.
+     */
     class Reader implements Runnable {
 
         File file;
@@ -69,9 +100,8 @@ public class ReadFile {
                 document = Jsoup.parse(new String(Files.readAllBytes(file.listFiles()[0].toPath())));
             } catch (IOException e) {
                 e.printStackTrace();
-                System.out.println("---------------read line 44-------------------");
             }
-            Elements docElements = document.getElementsByTag("DOC");
+            Elements docElements = document.getElementsByTag("DOC");//split by DOC tag
             document = null;
             cDocument[] docToParse = new cDocument[docElements.size()];
             int placeInDoc = 0;
@@ -84,13 +114,20 @@ public class ReadFile {
                 String language = "";
 
                 for (Element fElement : fElements) {
-                    if (fElement.attr("P").equals("104")) {
+                    if (fElement.attr("P").equals("104")) {//city
                         city = fElement.text();
+                        if (city.length() > 0 && Character.isLetter(city.charAt(0)))
+                            city = city.split(" ")[0].toUpperCase();
+                        else
+                            city = "";
                         //Todo more about the city (restcountries.eu API)
-                    } else if (fElement.attr("P").equals("105"))
+                    } else if (fElement.attr("P").equals("105")) {//language
                         language = fElement.text();
+                        if (!language.equals("") && !Character.isDigit(language.charAt(0))) {
+                            languages.add(language);
+                        }
+                    }
                 }
-
                 String ID = IDElement.text();
                 String title = TitleElement.text();
                 String text = TextElement.text();
@@ -99,7 +136,10 @@ public class ReadFile {
                 cDoc.language = language;
                 docToParse[placeInDoc++] = cDoc;
             }
-            parser.doParsing(docToParse);
+            docElements.clear();
+            docElements = null;
+            parser.parse(docToParse);
+            docToParse = null;
             count.getAndDecrement();
             if (count.get() == 0) {
                 synchronized (syncObject) {

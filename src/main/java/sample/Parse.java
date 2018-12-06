@@ -7,15 +7,39 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * This class has the responsebility to do the parse.
+ * We got array of docs from one file and pase each one in thread and wait untul and.
+ */
 public class Parse {
-    ExecutorService parsers_pool = Executors.newCachedThreadPool();
-    ExecutorService doParse_pool = Executors.newCachedThreadPool();
-    static HashSet<String> stopWords = new HashSet<>();
-    AtomicInteger count = new AtomicInteger(0);
 
-    static {
-        File file = new File(ClassLoader.getSystemResource("stop_words.txt").getPath());
-        //TODO replace this section
+    /**
+     * Thread pool to threads that go the parse
+     */
+    ExecutorService parsers_pool = Executors.newCachedThreadPool();
+    /**
+     * The stopWords
+     */
+    static HashSet<String> stopWords = new HashSet<>();
+    /**
+     * if do stem to term
+     */
+    boolean ifStem;
+
+    Indexer indexer;
+
+    /**
+     * @param corpusName      - the path that all the files there are
+     * @param stopWordsPath   - the path to stopwords
+     * @param outputDirectory - the directory to write the posting files
+     * @param ifStem          - if do stemming
+     */
+    public Parse(String corpusName, String stopWordsPath, String outputDirectory, boolean ifStem) {
+        this.ifStem = ifStem;
+        StringBuilder name = new StringBuilder(corpusName);
+        indexer = new Indexer(outputDirectory, ifStem);
+        //read the stopwords to hash set
+        File file = new File(stopWordsPath);
         BufferedReader br = null;
         try {
             br = new BufferedReader(new FileReader(file));
@@ -25,140 +49,43 @@ public class Parse {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //
+        stopWords.remove("between");
+        stopWords.remove("may");
     }
 
-    static AtomicLong sum = new AtomicLong(0);
 
-    Indexer indexer;
-
-//    {
-//        StringBuilder name = new StringBuilder(corpusName+"michael");
-//        while (true) {
-//            try {
-//                indexer = new Indexer(name.toString());
-//                break;
-//            } catch (FileAlreadyExistsException e) {
-//                name.append('a');
-//            }
-//        }
-//    }
-
-
-
-    public Parse(int length, String corpusName) {
-        count.addAndGet(length);
-        StringBuilder name = new StringBuilder(corpusName+"michael");
-        while (true) {
-            try {
-                indexer = new Indexer(name.toString());
-                break;
-            } catch (FileAlreadyExistsException e) {
-                name.append('a');
-            }
-        }
-    }
-
-    public void doParsing(cDocument[] cDocuments) {
-        doParse_pool.execute(new doParse(this, cDocuments));
-
-    }
-
-    class doParse implements Runnable {
-        Parse parse;
-        cDocument[] cDocuments;
-
-        public doParse(Parse parse, cDocument[] cDocuments) {
-            this.parse = parse;
-            this.cDocuments = cDocuments;
-        }
-
-        @Override
-        public void run() {
-            parse.parse(cDocuments);
-        }
-    }
-
+    /**
+     * Do parse to document by thread and send him to andex file.
+     *
+     * @param docs - array of docs from one file
+     */
     public void parse(cDocument[] docs) {
         Future<cDocument>[] futures = new Future[docs.length];
         cDocument document;
+        //send each doc to thread
         for (int i = 0; i < docs.length; i++) {
             document = docs[i];
             Future<cDocument> fpd = parsers_pool.submit(new Parser(document));
             futures[i] = fpd;
         }
-        cDocument pd;
-        cDocument[] documents = new cDocument[docs.length];
+
+        //wait for parser and send to andex.
         for (int i = 0; i < docs.length; i++) {
             try {
-//                documents[i] = ;
-                indexer.doAndexing(futures[i].get());
+                indexer.andex(futures[i].get());
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         }
-        if (count.decrementAndGet() == 0) {
-//            indexer.doAndexing(new cDocument("shutdown", null, null));
-//            try {
-//                Thread.sleep(2000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-            indexer.stopIndexing();
-            doParse_pool.shutdown();
-        }
-//        long start = System.currentTimeMillis();
-//
-//        HashMap<String, List<Object>> dictionary = new HashMap<>();
-//        HashMap<String, List<Object>> dictionary_stem = new HashMap<>();
-//        HashMap<String, List<Object>> dictionary_cities = new HashMap<>();
-//        Stemmer stemmer = new Stemmer();
-//        for (cDocument doc : documents) {
-//            if (doc.city != null) {
-//                if (!dictionary_cities.containsKey(doc.city))
-//                    dictionary_cities.put(doc.city, new ArrayList<>());
-//                dictionary_cities.get(doc.city).add(doc.ID);
-//
-//            }
-//            HashMap<String,Integer> ddictionary = new HashMap<>();
-//            HashMap<String,Integer> ddictionary_stem = new HashMap<>();
-//            for (String term : doc.terms) {
-//                if (!ddictionary.containsKey(term))
-//                    ddictionary.put(term,1);
-//                else{
-//                    Integer temp = ddictionary.get(term);
-//                    ddictionary.put(term,temp+1);
-//                }
-//                String sterm = stemmer.stemTerm(term);//maybe StringBuilder or something
-//                if (!ddictionary_stem.containsKey(sterm))
-//                    ddictionary_stem.put(sterm,1);
-//                else{
-//                    Integer temp = ddictionary_stem.get(sterm);
-//                    ddictionary_stem.put(sterm,temp+1);
-//                }
-//            }
-//            for (String t : ddictionary.keySet()) {
-//                if (!dictionary.containsKey(t))
-//                    dictionary.put(t,new ArrayList<>());
-//                dictionary.get(t).add(new Pair<>(doc.ID,ddictionary.get(t)));
-//            }
-//            for (String t : ddictionary_stem.keySet()) {
-//                if (!dictionary_stem.containsKey(t))
-//                    dictionary_stem.put(t,new ArrayList<>());
-//                dictionary_stem.get(t).add(new Pair<>(doc.ID,ddictionary_stem.get(t)));
-//            }
-//        }
-//        long end = System.currentTimeMillis();
-//        long s = sum.addAndGet(end-start);
-//        System.out.println(s);
-
-//        System.out.println("1164");
-
-//        parsers_pool.shutdown(); //Todo check when to close
-
+        System.out.println("DONE");
     }
 
-
+    /**
+     * check if string is double number
+     *
+     * @param str - string to check
+     * @return true if string is double number
+     */
     public static boolean isDoubleNumber(String str) {
         try {
             double number = Double.parseDouble(str);
@@ -168,6 +95,12 @@ public class Parse {
         }
     }
 
+    /**
+     * check if string is integer number
+     *
+     * @param str - string to check
+     * @return true if string is integer number
+     */
     public static boolean isIntegernumber(String str) {
         try {
             int number = Integer.parseInt(str);
@@ -177,6 +110,12 @@ public class Parse {
         }
     }
 
+    /**
+     * check if string represent fraction number
+     *
+     * @param str - string to check
+     * @return true if string is fraction number
+     */
     public static boolean isFraction(String str) {
         if (str.contains("/")) {
             String[] splitted = str.split("/");
@@ -186,8 +125,14 @@ public class Parse {
         return false;
     }
 
-    // how to save long and big number like 10.123000000000034B or 10B
-    public static String parseNumber(String... str) {
+    /**
+     * do parse according to Number rules
+     *
+     * @param str - string to parse
+     * @return the string after parse
+     */
+    public static String parseNumber(String... str)
+    {
         String ans = "";
         Double strAsDouble = Double.parseDouble(str[0]);
         int shift = 0;
@@ -224,12 +169,24 @@ public class Parse {
         return ans;
     }
 
+    /**
+     * do parse according to precent rules
+     *
+     * @param str - string to parse
+     * @return the string after parse
+     */
     public static String parsePrecent(String... str) {
         if (str[1].equals("%"))
             return str[0] + str[1];
         return str[0] + "%";
     }
 
+    /**
+     * do parse according to price rules
+     *
+     * @param str - string to parse
+     * @return the string after parse
+     */
     public static String parsePrice(String... str) {
         int shift = 0;
         Double price = 0.0;
@@ -267,7 +224,18 @@ public class Parse {
         return (price % 1 == 0.0 ? Integer.toString(price.intValue()) : price.toString()) + (shift > 0 ? " M " : " ") + "Dollars";
     }
 
+    /**
+     * do parse according to date rules
+     * if the length us 3 so we have year, month, day. it's our rule
+     *
+     * @param str - string to parse
+     * @return the string after parse
+     */
     public static String parseDate(String... str) {
+        if (str.length == 3)//YYYY-MM-DD
+        {
+            return str[2] + "-" + Date.DateToDateNum.get(str[1].toUpperCase()) + "-" + str[0];
+        }
         if (Date.DateToDateNum.containsKey(str[0].toUpperCase())) {
             int dayOrYear = Integer.parseInt(str[1]);
             if (dayOrYear > Date.MonthToNumberOfDays.get(str[0].toUpperCase()))//YYYY-MM
@@ -278,24 +246,54 @@ public class Parse {
         return Date.DateToDateNum.get(str[1].toUpperCase()) + "-" + str[0];
     }
 
+    /**
+     * remove dot and slash from unneccessey place.
+     *
+     * @param str - string to parse
+     * @return the string after parse
+     */
     public static String cleanToken(String str) {
-        str = str.replaceAll("['\"+^:,\t*!\\\\@#=`~;)(?><}{_\\[\\]]", "");
-        if (str.endsWith("."))
+        if (str.equals(""))
+            return str;
+        str = str.replaceAll("/", "");
+//        if (str.charAt(0) == '/' || str.charAt(0) == '\'')
+//            str = str.substring(1, str.length());
+        if (str.equals(""))
+            return str;
+        if (str.charAt(str.length() - 1) == '.' || str.charAt(str.length() - 1) == ',' || str.charAt(str.length() - 1) == '-')
             str = str.substring(0, str.length() - 1);
         return str;
     }
 
+    public static String parceDistance(String... str) {
+        if (str[1].matches("kilometer|km|kilometers")) {
+            double d = Double.parseDouble(str[0]);
+            d *= 1000;
+            return parseNumber(String.valueOf(d)) + " " + "meter";
+        } else {
+            double d = Double.parseDouble(str[0]);
+            return parseNumber(String.valueOf(d)) + " " + "meter";
+        }
+    }
+
+    /**
+     * check if string is not a speciel word from rules
+     *
+     * @param term - the word to check
+     * @return true if is simple word
+     */
     public static boolean isSimpleTerm(String term) {
-        if (term.startsWith("$") || Date.MonthToNumberOfDays.containsKey(term.toUpperCase()) || Character.isDigit(term.charAt(0)) || term.toLowerCase().equals("between"))
+        if (term.startsWith("$") || Date.MonthToNumberOfDays.containsKey(term.toUpperCase()) || Character.isDigit(term.charAt(0)) || term.toLowerCase().equals("between") || term.toLowerCase().equals("may"))
             return false;
         return true;
     }
 
-
-//    @Override/
-
+    /**
+     * This class is thread that get doc and return the document with dictionary of terms
+     */
     class Parser implements Callable<cDocument> {
         private cDocument document;
+
 
         Parser(cDocument document) {
             this.document = document;
@@ -303,67 +301,112 @@ public class Parse {
 
         @Override
         public cDocument call() {
-            String[] tokens = document.text.replaceAll("\\.\\.+", ". ").replaceAll("[\\.,][ \n\t\"]|[\\|\"+^:\t*!\\\\@#=`~;)(?><}{_\\[\\](--)]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").split("\n|\\s+");
-//        ArrayList<String> ans = new ArrayList<>();
+            String[] tokens = document.text.replaceAll("\\.\\.+", " ").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(?><}{_\\[\\]]|(--)", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
+            document.text = "";//release memory
             String term = "";
             int tokenLength = tokens.length;
             for (int i = 0; i < tokenLength; i++) {
-                if (tokens[i].equals("") || stopWords.contains(tokens[i].toLowerCase()))
+                if (tokens[i].equals("") || stopWords.contains(tokens[i].toLowerCase()))//not need to save
                     continue;
-                if (tokens[i].toLowerCase().equals("blocks"))
-                    System.out.println("ff1");
-                if (isSimpleTerm(tokens[i]))
+                if (isSimpleTerm(tokens[i])) {
+                    if (term.toLowerCase().equals(document.city.toLowerCase()))//to cities index.
+                        document.cityPosition.add(i);
                     term = tokens[i];
-                else if (tokens[i].startsWith("$") && isDoubleNumber(tokens[i].replace("\\$", ""))) {
-                    String[] splitted = tokens[i].split("((?<=\\$)|(?=\\$))|\\-");
-                    if (i + 1 < tokenLength && Parse.cleanToken(tokens[i + 1]).matches("miliion|billion|trillion")) {
-                        term = parsePrice(splitted[0], splitted[1], tokens[++i]);
-                    } else
-                        term = parsePrice(splitted[0], splitted[1]);
+                } else if (tokens[i].startsWith("$") && isDoubleNumber(tokens[i].replace("$", ""))) {//price rule
+                    try {
+                        String[] splitted = tokens[i].split("((?<=\\$)|(?=\\$))|\\-");
+                        if (i + 1 < tokenLength && (tokens[i + 1]).matches("miliion|billion|trillion"))
+                            term = parsePrice(splitted[0], splitted[1], tokens[++i]);
+                        else
+                            term = parsePrice(splitted[0], splitted[1]);
+                    } catch (NumberFormatException ignore) {
+                    }
 
-                } else if (tokens[i].endsWith("%"))
+                } else if (tokens[i].endsWith("%"))//precent rule
                     term = parsePrecent(tokens[i].split("((?<=%)|(?=%))"));
-                else if (Parse.isDoubleNumber(tokens[i]))///check minus number
+                else if (Parse.isDoubleNumber(tokens[i]))//any case contains number
                 {
-                    if (i + 1 < tokenLength && tokens[i + 1].matches("Dollars"))
-                        term = Parse.parsePrice(tokens[i], Parse.cleanToken(tokens[++i]));
-                    else if (i + 1 < tokenLength && tokens[i + 1].toLowerCase().matches("percent|percentage"))
+                    if (i + 1 < tokenLength && tokens[i + 1].matches("Dollars"))//price
+                        term = parsePrice(tokens[i], (tokens[++i]));
+                    else if (i + 1 < tokenLength && tokens[i + 1].toLowerCase().matches("percent|percentage"))//precent
                         term = parsePrecent(tokens[i], tokens[++i]);
-                    else if (i + 1 < tokenLength && Parse.isFraction(tokens[i + 1]) && i + 2 < tokenLength && tokens[i + 2].equals("Dollars"))
-                        term = Parse.parsePrice(tokens[i], Parse.cleanToken(tokens[++i]), Parse.cleanToken(tokens[++i]));
-                    else if (i + 1 < tokenLength && tokens[i + 1].matches("m|bn") && i + 2 < tokenLength && tokens[i + 2].equals("Dollars"))
-                        term = Parse.parsePrice(tokens[i], Parse.cleanToken(tokens[++i]), Parse.cleanToken(tokens[++i]));
+                    else if (i + 1 < tokenLength && Parse.isFraction(tokens[i + 1]) && i + 2 < tokenLength && tokens[i + 2].equals("Dollars"))//price
+                        term = Parse.parsePrice(tokens[i], (tokens[++i]), (tokens[++i]));
+                    else if (i + 1 < tokenLength && tokens[i + 1].matches("m|bn") && i + 2 < tokenLength && tokens[i + 2].equals("Dollars"))//price
+                        term = Parse.parsePrice(tokens[i], (tokens[++i]), (tokens[++i]));
                     else if (i + 3 < tokenLength && tokens[i + 1].matches("miliion|billion|trillion") && tokens[i + 2].equals("U.S") && tokens[i + 3].equals("dollars"))
-                        term = Parse.parsePrice(tokens[i], Parse.cleanToken(tokens[++i]), Parse.cleanToken(tokens[++i]), Parse.cleanToken(tokens[++i]));
+                        term = Parse.parsePrice(tokens[i], (tokens[++i]), (tokens[++i]), (tokens[++i]));
                     else if (i + 1 < tokenLength && (tokens[i + 1].matches("Thousand|Million|Billion|Trillion") || Parse.isFraction(tokens[i + 1])))
-                        term = Parse.parseNumber(tokens[i], Parse.cleanToken(tokens[++i]));
-                    else if (i + 1 < tokenLength && Date.DateToDateNum.containsKey(tokens[i + 1].toUpperCase()))
-                        term = Parse.parseDate(tokens[i], Parse.cleanToken(tokens[++i]));
+                        term = Parse.parseNumber(tokens[i], (tokens[++i]));
+                    else if (i + 1 < tokenLength && Date.DateToDateNum.containsKey(tokens[i + 1].toUpperCase()))//date. current is the number
+                        if (i + 2 < tokenLength && isIntegernumber(tokens[i + 2]) && Integer.parseInt(tokens[i + 2]) > 1000) {
+                            term = parseDate(tokens[i + 2], tokens[i + 1], tokens[i]);
+                            i += 2;
+                        } else
+                            term = Parse.parseDate(tokens[i], (tokens[++i]));
+                    else if (i + 1 < tokenLength && tokens[i + 1].matches("meter|meters|kilometer|kilometers"))
+                        term = parceDistance(tokens[i], tokens[++i]);
                     else
                         term = Parse.parseNumber(tokens[i]);
-                } else if (i + 1 < tokenLength && Date.DateToDateNum.containsKey(tokens[i].toUpperCase())) {
+                } else if (i + 1 < tokenLength && Date.DateToDateNum.containsKey(tokens[i].toUpperCase())) {//date. cuurent is the month
                     if (i + 1 < tokenLength && Parse.isIntegernumber(tokens[i + 1]))
-                        term = Parse.parseDate(tokens[i], Parse.cleanToken(tokens[++i]));
-                } else if (tokens[i].toLowerCase().equals("between") && i + 3 < tokenLength && Parse.isDoubleNumber(tokens[i + 1]) && tokens[i + 2].toLowerCase().equals("and") && Parse.isDoubleNumber(tokens[i + 3]))
-                    term = tokens[i] + tokens[++i] + tokens[++i] + tokens[++i];
-                else
+                        term = Parse.parseDate(tokens[i], (tokens[++i]));
+                    else if (tokens[i].toLowerCase().equals("may"))
+                        continue;
+                } else if (tokens[i].equals("between")) {//maybe is beetween rule
+                    if (tokens[i].toLowerCase().equals("between") && i + 3 < tokenLength && Parse.isDoubleNumber(tokens[i + 1]) && tokens[i + 2].toLowerCase().equals("and") && Parse.isDoubleNumber(tokens[i + 3]))
+                        term = tokens[i] + " " + tokens[++i] + " " + tokens[++i] + " " + tokens[++i];
+                    else
+                        continue;
+                } else
                     term = tokens[i];
-//            ans.add(term);
-                if (!document.terms.containsKey(term))
-                    document.terms.put(term, 1);
-                else {
-                    document.terms.put(term, document.terms.get(term) + 1);
+                //put the term in dictionary acoording to case
+                term = cleanToken(term);
+                if (!term.equals("")) {
+//                    if (Character.isLowerCase(term.charAt(0))) {
+//                        if (document.terms.containsKey(term.toUpperCase())) {
+//                            Integer prevTF = document.terms.remove(term.toUpperCase());
+//                            document.terms.put(term, prevTF + 1);
+//                        } else
+//                            document.terms.put(term, document.terms.getOrDefault(term, 0) + 1);
+//                    } else if (Character.isUpperCase(term.charAt(0))) {
+//                        if (document.terms.containsKey(term.toLowerCase())) {
+//                            document.terms.put(term.toLowerCase(), document.terms.get(term.toLowerCase()) + 1);
+//                        } else
+//                            document.terms.put(term.toUpperCase(), document.terms.getOrDefault(term, 0) + 1);
+//                    } else {
+//                        if (!document.terms.containsKey(term))
+//                            document.terms.put(term, 1);
+//                        else {
+//                            document.terms.put(term, document.terms.get(term) + 1);
+//                        }
+//                    }
+                    if (Character.isLowerCase(term.charAt(0))) {
+                        Integer df;
+                        term = term.toLowerCase();
+                        if ((df = document.terms.remove(term.toUpperCase())) != null) {
+                            document.terms.put(term, df);
+                        }
+                    } else {
+                        if (document.terms.containsKey(term.toLowerCase())) {
+                            term = term.toLowerCase();
+                        } else
+                            term = term.toUpperCase();
+                    }
+
+                    document.terms.put(term, document.terms.getOrDefault(term, 0) + 1);
                 }
             }
-
+            //save the max_tf
             try {
                 document.max_tf = Collections.max(document.terms.values());
             } catch (Exception ignore) {//if the map empty
             }
-
-//            document.stem_dictionary(new Stemmer());
+            tokens = null;
+            //do stemming if need
+            if (ifStem)
+                document.stem_dictionary(new Stemmer());
             return document;
-//        System.out.println(Arrays.toString(ans.toArray()));
         }
     }
 }

@@ -17,19 +17,16 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-//        Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
+        Parent root = FXMLLoader.load(ClassLoader.getSystemResource("GUI.fxml"));
 //        primaryStage.setTitle("Hello World");
-//        primaryStage.setScene(new Scene(root, 300, 275));
-//        primaryStage.show();
-//        ExecutorService parsers_pool = Executors.newCachedThreadPool();
-//        parsers_pool.execute(new ReadFile("C:\\Users\\micha\\Desktop\\corpus"));
-//        parsers_pool.execute(new Parse());
-
+        primaryStage.setScene(new Scene(root, 600, 400));
+        primaryStage.setResizable(false);
+        primaryStage.show();
         //TODO Jsoup.parse("<text>ë</text>").getElementsByTag("text").text()
-        long starttime = System.currentTimeMillis();
-        ReadFile rf= new ReadFile("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\tcorpus10_first");
-        rf.readFiles();
-        System.out.println("The time is " + (System.currentTimeMillis()-starttime)/1000);
+//        long starttime = System.currentTimeMillis();
+//        ReadFile rf= new ReadFile("d:\\documents\\users\\michmich\\Downloads\\corpus");
+//        rf.readFiles();
+//        System.out.println("The time is " + (System.currentTimeMillis()-starttime)/1000);
 
 
     }

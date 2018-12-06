@@ -1,8 +1,22 @@
 package sample;
 
+//import org.json.JSONArray;
+//import org.json.JSONObject;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import com.google.gson.JsonArray;
+import java.io.*;
 import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -10,15 +24,45 @@ public class IndexerTest {
 
     @org.junit.Test
     public void intToBytes() {
-//        int number = 128;
-//        int num_of_bytes = 2;
-        System.out.println(Arrays.toString(ByteBuffer.allocate(4).putInt(126).array()));
-        assertEquals(Arrays.toString(new byte[]{0,126}),Arrays.toString(Indexer.intToBytes(126,2)));
-        System.out.println(Arrays.toString(ByteBuffer.allocate(4).putInt(128).array()));
-        assertEquals(Arrays.toString(new byte[]{0,-128}),Arrays.toString(Indexer.intToBytes(128,2)));
-        System.out.println(Arrays.toString(ByteBuffer.allocate(4).putInt(256).array()));
-        assertEquals(Arrays.toString(new byte[]{1,0}),Arrays.toString(Indexer.intToBytes(256,2)));
-        System.out.println(Arrays.toString(ByteBuffer.allocate(4).putInt(65836).array()));
-        assertEquals(Arrays.toString(new byte[]{1,1,44}),Arrays.toString(Indexer.intToBytes(65836,3)));
+        JsonElement json = null;
+        JsonParser parser = new JsonParser();
+        try {
+            json = parser.parse(new FileReader(new File(ClassLoader.getSystemResource("json.json").getPath())));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+//        Object object = null;
+//        try {
+//            object = parser
+//                    .parse(new FileReader(ClassLoader.getSystemResource("json.json").getFile()));
+//        } catch (IOException | ParseException e) {
+//            e.printStackTrace();
+//        }
+//        JSONObject json = (JSONObject)object;
+//        JSONArray jsonArray = (JSONArray) json.get("capital");
+        System.out.println();
+
+
+        /*String path = "https://restcountries.eu/rest/v2/capital/";
+        URL url = null;
+        String ans = "";
+        try {
+            url = new URL(path +"" );
+            URLConnection con = url.openConnection();
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String data = bufferedReader.readLine();
+            String state = data.substring(data.indexOf("{\"name\":") + 9, data.indexOf("topLevelDomain") - 3);//In this place we have the data of state.
+            String currency = data.substring(data.indexOf("\"currencies\":[{\"code\":") + 23, data.indexOf("\"currencies\":[{\"code\":") + 26);//In this place we have the data of currency.
+            String population = data.substring(data.indexOf("\"population\":") + 13, data.indexOf(",\"latlng\""));//In this place we have the data of population.
+            population = Parse.parseNumber(population);// We need to return the population according to parse rule.
+            ans = new StringBuilder("[").append(state).append(",").append(currency).append(",").append(population).append("]").toString();
+        } catch (MalformedURLException e) {
+            return "[*,*,*]";
+        } catch (FileNotFoundException e) {
+            return "[*,*,*]";
+        } catch (IOException e) {
+            return "[*,*,*]";
+        }
+        return ans;*/
     }
 }
