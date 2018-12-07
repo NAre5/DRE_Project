@@ -1,12 +1,12 @@
 package sample;
 
 //import org.json.JSONObject;
-import sun.awt.Mutex;
 
+import sun.awt.Mutex;
 import java.io.*;
-        import java.util.*;
+import java.util.*;
 import java.util.concurrent.*;
-        import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class responsible to index process.
@@ -27,6 +27,7 @@ public class Indexer {
     private AtomicInteger lastID = new AtomicInteger(0);
     private StringBuilder documentsList = new StringBuilder();//IDnumber=docID;max_tf;uniqueterms;city;language;title
     public CityAPI api = new CityAPI();
+    boolean ifStem;
 
     /**
      * c'tor
@@ -36,6 +37,7 @@ public class Indexer {
      */
     public Indexer(String diretory_name, boolean ifStem) {
         d_path = diretory_name;
+        this.ifStem = ifStem;
         boolean b;
         File dir = new File(diretory_name);
         //create all files and connect them with mapper and initialize the fields.
@@ -225,6 +227,13 @@ public class Indexer {
         return api.getCityInfo(city);
     }
 
+    public void setDictionary(Map<String, Integer> map) {
+        dictionary = (ConcurrentHashMap<String, Integer>) map;
+    }
+
+    public void setDictionaryTF(Map<String, Integer> map) {
+        dictionaryTF = (ConcurrentHashMap<String, Integer>) map;
+    }
 
     /**
      * In the end of the index process we sort the files in order to make the answer on query in fast way.
@@ -236,31 +245,31 @@ public class Indexer {
         uniqueTerm.set(dictionary.size());//to the alert after index end
         //save maps
         System.out.println(dictionary.size() + "-" + dictionaryTF.size());
-        MapSaver.saveMap(new TreeMap<String, Integer>(dictionary), d_path + "\\dic");
+        MapSaver.saveMap(new TreeMap<String, Integer>(dictionary), d_path + "\\dic"+(ifStem ? "stem" : "nostem"));
         dictionary.clear();
-        MapSaver.saveMap(new TreeMap<String, Integer>(dictionaryTF), d_path + "\\dicTF");
+        MapSaver.saveMap(new TreeMap<String, Integer>(dictionaryTF), d_path + "\\dicTF"+(ifStem ? "stem" : "nostem"));
         dictionaryTF.clear();
         Thread[] threads = new Thread[27];
         char start = 'a';
         char end = 'z';
         int begin = 0;
-        while (end > start) {
+        while ('z' >= start) {
             threads[begin] = new Thread(new SortThread(mapper.get(String.valueOf(start))));
-            threads[25 - begin] = new Thread(new SortThread(mapper.get(String.valueOf(end))));
+//            threads[25 - begin] = new Thread(new SortThread(mapper.get(String.valueOf(end))));
             threads[begin].start();
-            threads[25 - begin].start();
+//            threads[25 - begin].start();
             try {
                 threads[begin].join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            try {
-                threads[25 - begin].join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                threads[25 - begin].join();
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
             start++;
-            end--;
+//            end--;
             begin++;
         }
         threads[26] = new Thread(new SortThread(mapper.get(String.valueOf("_"))));

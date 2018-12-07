@@ -8,8 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * This class has the responsebility to do the parse.
- * We got array of docs from one file and pase each one in thread and wait untul and.
+ * This class has the responsibility to do the parse.
+ * We got array of docs from one file and pase each one in thread and wait until and.
  */
 public class Parse {
 
@@ -363,24 +363,6 @@ public class Parse {
                 //put the term in dictionary acoording to case
                 term = cleanToken(term);
                 if (!term.equals("")) {
-//                    if (Character.isLowerCase(term.charAt(0))) {
-//                        if (document.terms.containsKey(term.toUpperCase())) {
-//                            Integer prevTF = document.terms.remove(term.toUpperCase());
-//                            document.terms.put(term, prevTF + 1);
-//                        } else
-//                            document.terms.put(term, document.terms.getOrDefault(term, 0) + 1);
-//                    } else if (Character.isUpperCase(term.charAt(0))) {
-//                        if (document.terms.containsKey(term.toLowerCase())) {
-//                            document.terms.put(term.toLowerCase(), document.terms.get(term.toLowerCase()) + 1);
-//                        } else
-//                            document.terms.put(term.toUpperCase(), document.terms.getOrDefault(term, 0) + 1);
-//                    } else {
-//                        if (!document.terms.containsKey(term))
-//                            document.terms.put(term, 1);
-//                        else {
-//                            document.terms.put(term, document.terms.get(term) + 1);
-//                        }
-//                    }
                     if (Character.isLowerCase(term.charAt(0))) {
                         Integer df;
                         term = term.toLowerCase();

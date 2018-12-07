@@ -112,7 +112,6 @@ public class ReadFile {
                 Elements fElements = element.getElementsByTag("F");
                 String city = "";
                 String language = "";
-
                 for (Element fElement : fElements) {
                     if (fElement.attr("P").equals("104")) {//city
                         city = fElement.text();

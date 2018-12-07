@@ -4,13 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+
 
 /**
  * This class responsible to get data about city from API https://restcountries.eu
@@ -22,7 +19,7 @@ public class CityAPI {
     public CityAPI() {
         JsonParser parser = new JsonParser();
         try {
-            json = parser.parse(new FileReader(new File(ClassLoader.getSystemResource("json.json").getPath())));
+            json = parser.parse(new FileReader(new File("C:\\Users\\micha\\OneDrive\\מסמכים\\intelliJ\\DRE_Project\\src\\main\\Resources\\json.json")));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

@@ -34,6 +34,7 @@ public class Controller {
     Iterator<Map.Entry<String, String>> lastIter;
     int lastLine = 0;
     private String lastPath;
+    private boolean lastStem;
     public Map<String, String> map;
 
     @FXML
@@ -95,6 +96,7 @@ public class Controller {
             progressBar.setProgress(0);
             progressBar.setVisible(true);
             lastPath = text_postings.getText();//save the last path of the last time we save the dictionary
+            lastStem = checkBox_stemming.isSelected();
             long startTime = System.nanoTime();//start to calculate how much the the process takes
             model.startIndexing(text_corpus.getText(), text_stop_words.getText(), text_postings.getText(), checkBox_stemming.isSelected());
             long CreateInsexTime = (System.nanoTime() - startTime) / 1000000000;
@@ -126,9 +128,12 @@ public class Controller {
     }
 
     public void loadDictionary(ActionEvent actionEvent) {
-        if (lastPath != null)
-            map = new TreeMap<>(MapSaver.loadMap(lastPath + "\\dicTF"));
-        showAlert(Alert.AlertType.INFORMATION, "done loading");
+        if (lastPath != null) {
+            map = new TreeMap<>(MapSaver.loadMap(lastPath + "\\dicTF"+(lastStem?"stem":"nostem")));
+            showAlert(Alert.AlertType.INFORMATION, "done loading");
+        }
+        else
+            showAlert(Alert.AlertType.ERROR,"You need to start indexing before you can load dictionary.");
     }
 
     /**
