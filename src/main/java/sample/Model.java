@@ -17,7 +17,7 @@ public class Model {
     }
 
     /**
-     * reset all mamory and file
+     * reset all memory and file
      */
     public void reset() {
         readFile.parser.indexer.reset();

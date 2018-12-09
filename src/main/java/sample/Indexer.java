@@ -175,7 +175,7 @@ public class Indexer {
      * In the end we wait to all threads to end.
      */
     private void writeWaitingToPosting() {
-        Thread[] threads = new Thread[28];//todo 29 to cities
+        Thread[] threads = new Thread[28];
         char c = 'a';
         for (int i = 0; i < threads.length - 2; i++) {
             threads[i] = new Thread(new WriterThread(mutexOnFiles[i], mutexOnLists[i], mapper.get(String.valueOf(c)), waitingRecords.get(String.valueOf(c))));
@@ -192,7 +192,6 @@ public class Indexer {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         }
     }
 
@@ -213,6 +212,9 @@ public class Indexer {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        waitingRecords.clear();
+        documentsList.setLength(0);
+        cities.clear();
 
     }
 
@@ -225,14 +227,6 @@ public class Indexer {
      */
     private String getcityFromAPI(String city) {
         return api.getCityInfo(city);
-    }
-
-    public void setDictionary(Map<String, Integer> map) {
-        dictionary = (ConcurrentHashMap<String, Integer>) map;
-    }
-
-    public void setDictionaryTF(Map<String, Integer> map) {
-        dictionaryTF = (ConcurrentHashMap<String, Integer>) map;
     }
 
     /**
@@ -249,34 +243,41 @@ public class Indexer {
         dictionary.clear();
         MapSaver.saveMap(new TreeMap<String, Integer>(dictionaryTF), d_path + "\\dicTF"+(ifStem ? "stem" : "nostem"));
         dictionaryTF.clear();
-        Thread[] threads = new Thread[27];
         char start = 'a';
         char end = 'z';
-        int begin = 0;
         while ('z' >= start) {
-            threads[begin] = new Thread(new SortThread(mapper.get(String.valueOf(start))));
-//            threads[25 - begin] = new Thread(new SortThread(mapper.get(String.valueOf(end))));
-            threads[begin].start();
-//            threads[25 - begin].start();
-            try {
-                threads[begin].join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-//            try {
-//                threads[25 - begin].join();
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
+            sortFile(mapper.get(String.valueOf(start)));
             start++;
-//            end--;
-            begin++;
         }
-        threads[26] = new Thread(new SortThread(mapper.get(String.valueOf("_"))));
-        threads[26].start();
+        sortFile(mapper.get(String.valueOf("_")));
+
+    }
+
+    private void sortFile(File file)
+    {
+        TreeMap<String,String> words = new TreeMap<>();
+        BufferedReader br = null;
         try {
-            threads[26].join();
-        } catch (InterruptedException e) {
+            br = new BufferedReader(new FileReader(file));
+            String st;
+
+            while ((st = br.readLine()) != null) {
+                int index = st.indexOf(';');
+                words.put(st.substring(0, index), st.substring(index));
+            }
+            br.close();
+            FileWriter fileWriter = new FileWriter(file, false);
+            fileWriter.write("");
+            fileWriter.close();
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> entry : words.entrySet()) {
+                sb.append(entry.getKey()).append(entry.getValue()).append('\n');
+            }
+            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, true));
+            bufferedWriter.write(sb.toString());//write all together to reduce IO
+            bufferedWriter.flush();
+            bufferedWriter.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -306,6 +307,8 @@ public class Indexer {
             }
             dictionary.clear();
             dictionaryTF.clear();
+            cities.clear();
+            documentsList.setLength(0);
             docAndexed.set(0);
             uniqueTerm.set(0);
             lastID.set(0);
@@ -366,146 +369,5 @@ class WriterThread implements Runnable {
         listToWrite.setLength(0);//clear the list
         mutexOnFile.unlock();
         mutexOnList.unlock();
-    }
-}
-
-/**
- * This thread responsible to sort file with ognore case sensetive
- */
-class SortThread implements Runnable {
-    //the file to sort
-    private File file;
-    //all the words that start at big char
-    private TreeMap<String, String> words;
-    //all the words that start at small char
-    private TreeMap<String, String> smallWords;
-    private LinkedHashMap<String, String> sortedFile;//key: term~docID  value: ;tf
-
-    SortThread(File file) {
-        this.file = file;
-        words = new TreeMap<>();
-        smallWords = new TreeMap<>();
-        sortedFile = new LinkedHashMap<>();
-    }
-
-    public void run() {
-        BufferedReader br = null;
-        try {
-            br = new BufferedReader(new FileReader(file));
-            String st;
-            //put each word in match map
-//            while ((st = br.readLine()) != null) {
-//                if (Character.isLowerCase(st.charAt(0))) {
-//                    smallWords.put(st.substring(0, st.indexOf(';')), st.substring(st.indexOf(';')));
-//                } else
-//                    bigWords.put(st.substring(0, st.indexOf(';')), st.substring(st.indexOf(';')));
-//            }
-//            br.close();
-//            Iterator<Map.Entry<String, String>> bigIterator = bigWords.entrySet().iterator();
-//            Iterator<Map.Entry<String, String>> smallIterator = smallWords.entrySet().iterator();
-//            String termBigSmall = "";//help to know if we were in case that we have small and big word equals
-//            if (smallIterator.hasNext()) {
-//                Map.Entry<String, String> smallEntry = smallIterator.next();
-//                Map.Entry<String, String> bigEntry = null;
-//                try {
-//                    bigEntry = bigIterator.next();
-//                }
-//                catch (NoSuchElementException ignore){}
-//                do {//while we have word in both map we need to compare between them
-//                    if (smallEntry == null || bigEntry == null)
-//                        break;
-//                    String smallKey = smallEntry.getKey();
-//                    String bigKey = bigEntry.getKey();
-//                    //if the word in each map are equals we need to save the big word as lower
-//                    while (smallKey.substring(0, smallKey.indexOf('~')).toUpperCase().equals(bigKey.substring(0, bigKey.indexOf('~')).toUpperCase())) {
-//                        termBigSmall = smallKey;//todo check if to do toLower
-//                        sortedFile.put(smallKey, smallEntry.getValue());
-//                        sortedFile.put(bigKey.toLowerCase(), bigEntry.getValue());
-//                        smallEntry = smallIterator.next();
-//                        bigEntry = bigIterator.next();
-//                        smallKey = smallEntry.getKey();
-//                        bigKey = bigEntry.getKey();
-//                    }
-//                    if (smallKey.substring(0, smallKey.indexOf('~')).toUpperCase().compareTo(bigKey.substring(0, bigKey.indexOf('~'))) < 0) {//if the small word befor the big lexicographi save the small
-//                        sortedFile.put(smallKey, smallEntry.getValue());
-//                        try {
-//
-//                            smallEntry = smallIterator.next();
-//                        }
-//                        catch (NoSuchElementException ignore){}
-//                    } else {//if the small word befor the big lexicographi save the big
-//                        if (!termBigSmall.equals("")) {//if we were in problem with big and small write the big because it was//todo לבדוק שהמילה מופיעה גם אחר כך
-//                            termBigSmall = "";
-//                            sortedFile.put(bigKey.toLowerCase(), bigEntry.getValue());
-//                        } else {
-//                            sortedFile.put(bigKey, bigEntry.getValue());
-//                        }
-//                        try {
-//                            bigEntry = bigIterator.next();
-//                        }catch (NoSuchElementException ignore){}
-//                    }
-//
-//                } while (bigIterator.hasNext() && smallIterator.hasNext());
-//                if (!smallIterator.hasNext()) {//we write all tof the big words
-//                    if (bigEntry != null) {
-//                        sortedFile.put(bigEntry.getKey(), bigEntry.getValue());
-//                    }
-//                    while (bigIterator.hasNext()) {
-//                        bigEntry = bigIterator.next();
-//                        sortedFile.put(bigEntry.getKey(), bigEntry.getValue());
-//                    }
-//                } else if (!bigIterator.hasNext()) {//we write all tof the small words
-//                    if (smallEntry != null) {
-//                        sortedFile.put(smallEntry.getKey(), smallEntry.getValue());
-//                    }
-//                    while (smallIterator.hasNext()) {
-//                        smallEntry = smallIterator.next();
-//                        sortedFile.put(smallEntry.getKey(), smallEntry.getValue());
-//                    }
-//                }
-//            } else {//special check for '_' doc(number etc.)
-//                try {
-//                    Map.Entry<String, String> bigEntry = bigIterator.next();
-//                    if (!smallIterator.hasNext()) {
-//                        if (bigEntry != null) {
-//                            sortedFile.put(bigEntry.getKey(), bigEntry.getValue());
-//                        }
-//                        while (bigIterator.hasNext()) {
-//                            bigEntry = bigIterator.next();
-//                            sortedFile.put(bigEntry.getKey(), bigEntry.getValue());
-//                        }
-//                    }
-//                }catch (Exception ignore){}
-//            }
-//            FileWriter fileWriter = new FileWriter(file, false);
-//            fileWriter.write("");
-//            fileWriter.close();
-//            StringBuilder stringBuilder = new StringBuilder();
-//            for (Map.Entry<String, String> entry : sortedFile.entrySet()) {//create the string to write
-//                stringBuilder.append(entry.getKey()).append(entry.getValue()).append("\n");
-//            }
-//            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, true));
-//            bufferedWriter.write(stringBuilder.toString());//write all together to reduce IO
-//            bufferedWriter.flush();
-//            bufferedWriter.close();
-            while ((st = br.readLine()) != null) {
-                int index = st.indexOf(';');
-                words.put(st.substring(0, index), st.substring(index));
-            }
-            br.close();
-            FileWriter fileWriter = new FileWriter(file, false);
-            fileWriter.write("");
-            fileWriter.close();
-            StringBuilder sb = new StringBuilder();
-            for (Map.Entry<String, String> entry : words.entrySet()) {
-                sb.append(entry.getKey()).append(entry.getValue()).append('\n');
-            }
-            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, true));
-            bufferedWriter.write(sb.toString());//write all together to reduce IO
-            bufferedWriter.flush();
-            bufferedWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }

@@ -301,7 +301,7 @@ public class Parse {
 
         @Override
         public cDocument call() {
-            String[] tokens = document.text.replaceAll("\\.\\.+", " ").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(?><}{_\\[\\]]|(--)", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
+            String[] tokens = document.text.replaceAll("\\.\\.+|--+", " ").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(?><}{_\\[\\]]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
             document.text = "";//release memory
             String term = "";
             int tokenLength = tokens.length;
@@ -362,6 +362,8 @@ public class Parse {
                     term = tokens[i];
                 //put the term in dictionary acoording to case
                 term = cleanToken(term);
+                if(stopWords.contains(term.toLowerCase()))
+                    continue;
                 if (!term.equals("")) {
                     if (Character.isLowerCase(term.charAt(0))) {
                         Integer df;
