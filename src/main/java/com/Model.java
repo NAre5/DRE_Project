@@ -1,4 +1,7 @@
-package sample;
+package com;
+
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * This class us from MVC architecture.
@@ -9,6 +12,7 @@ public class Model {
      * the main object
      */
     ReadFile readFile;
+
 
     public void startIndexing(String corpusPath, String stopWordsPath,String postingsPath, boolean ifStem)
     {
@@ -21,5 +25,12 @@ public class Model {
      */
     public void reset() {
         readFile.parser.indexer.reset();
+    }
+
+    /**
+     * @return the computed dictionary
+     */
+    public Map<String,String> getDictionary(){
+        return new TreeMap<>(MapSaver.loadMap(readFile.parser.indexer.d_path + "\\dicTF" + (readFile.parser.ifStem ? "stem" : "nostem")));
     }
 }

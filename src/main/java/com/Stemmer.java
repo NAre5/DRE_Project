@@ -1,4 +1,4 @@
-package sample;
+package com;
  /*
 
        Porter stemmer in CSharp, based on the Java port. The original paper is in

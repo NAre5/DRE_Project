@@ -1,11 +1,8 @@
-package sample;
+package com;
 
 import java.io.*;
-import java.nio.file.FileAlreadyExistsException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class has the responsibility to do the parse.
@@ -77,7 +74,7 @@ public class Parse {
                 e.printStackTrace();
             }
         }
-        System.out.println("DONE");
+//        System.out.println("DONE");
     }
 
     /**
@@ -131,8 +128,7 @@ public class Parse {
      * @param str - string to parse
      * @return the string after parse
      */
-    public static String parseNumber(String... str)
-    {
+    public static String parseNumber(String... str) {
         String ans = "";
         Double strAsDouble = Double.parseDouble(str[0]);
         int shift = 0;
@@ -301,11 +297,12 @@ public class Parse {
 
         @Override
         public cDocument call() {
-            String[] tokens = document.text.replaceAll("\\.\\.+|--+", " ").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(?><}{_\\[\\]]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
+            String[] tokens = document.text.replaceAll("\\.\\.+|--+", " ").replaceAll(",((?<=[0-9])|(?=[0-9]))","").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(\\?><}{_\\[\\]]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
             document.text = "";//release memory
-            String term = "";
             int tokenLength = tokens.length;
+            String term;
             for (int i = 0; i < tokenLength; i++) {
+                term = "";
                 if (tokens[i].equals("") || stopWords.contains(tokens[i].toLowerCase()))//not need to save
                     continue;
                 if (isSimpleTerm(tokens[i])) {
@@ -362,7 +359,7 @@ public class Parse {
                     term = tokens[i];
                 //put the term in dictionary acoording to case
                 term = cleanToken(term);
-                if(stopWords.contains(term.toLowerCase()))
+                if (stopWords.contains(term.toLowerCase()))
                     continue;
                 if (!term.equals("")) {
                     if (Character.isLowerCase(term.charAt(0))) {

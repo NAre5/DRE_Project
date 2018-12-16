@@ -10,8 +10,10 @@
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.Controller">
     <children>
         <GridPane layoutX="5.0" layoutY="115.0" prefHeight="85.0" prefWidth="592.0">
             <columnConstraints>
@@ -37,7 +39,7 @@
 
             </children>
         </GridPane>
-        <Button fx:id="button_createIndex" layoutX="383.0" layoutY="230.0" mnemonicParsing="false" onAction="#createInvertedIndex" text="Create" underline="true" />
+        <Button fx:id="button_createIndex" layoutX="475.0" layoutY="218.0" mnemonicParsing="false" onAction="#createInvertedIndex" text="Create" underline="true" />
         <CheckBox fx:id="checkBox_stemming" layoutX="14.0" layoutY="230.0" mnemonicParsing="false" text="Stemming?" />
         <GridPane fx:id="data" layoutX="100.0" layoutY="356.0">
             <columnConstraints>
@@ -51,11 +53,16 @@
             </rowConstraints>
             <children>
                 <ComboBox fx:id="languagesComboBox" prefWidth="150.0" />
-                <Button fx:id="resetButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#reset" text="reset" GridPane.columnIndex="1" />
-                <Button fx:id="loadDictionary" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#loadDictionary" text="load dictionary" GridPane.columnIndex="2" />
-            <Button fx:id="showDictionary" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showDictionary" text="show dictionary" GridPane.columnIndex="3" />
+                <Button fx:id="button_reset" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#reset" text="reset" GridPane.columnIndex="1" />
+                <Button fx:id="button_loadDictionary" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#loadDictionary" text="load dictionary" GridPane.columnIndex="2" />
+            <Button fx:id="button_showDictionary" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showDictionary" text="show dictionary" GridPane.columnIndex="3" />
             </children>
         </GridPane>
-      <ProgressBar fx:id="progressBar" layoutX="439.0" layoutY="234.0" prefHeight="18.0" prefWidth="123.0" progress="0.0" />
+      <ProgressBar fx:id="progressBar" layoutX="332.0" layoutY="221.0" prefHeight="18.0" prefWidth="123.0" progress="0.0" />
+      <Text layoutX="146.0" layoutY="71.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Document Retrival Engine" wrappingWidth="309.00000381469727">
+         <font>
+            <Font name="Bell MT" size="27.0" />
+         </font>
+      </Text>
     </children>
 </AnchorPane>

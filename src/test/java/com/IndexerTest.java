@@ -1,4 +1,4 @@
-package sample;
+package com;
 
 //import org.json.JSONArray;
 //import org.json.JSONObject;
@@ -7,14 +7,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
 import java.io.*;
-import java.math.BigInteger;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.ByteBuffer;
-import java.util.*;
-
-import static org.junit.Assert.*;
 
 public class IndexerTest {
 
@@ -23,7 +15,7 @@ public class IndexerTest {
         JsonElement json = null;
         JsonParser parser = new JsonParser();
         try {
-            json = parser.parse(new FileReader(new File(ClassLoader.getSystemResource("json.json").getPath())));
+            json = parser.parse(new FileReader(new File(ClassLoader.getSystemResource("sample/json.json").getPath())));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

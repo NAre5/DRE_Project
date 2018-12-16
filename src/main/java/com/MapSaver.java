@@ -1,8 +1,7 @@
-package sample;
+package com;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -70,6 +69,14 @@ public class MapSaver {
 
         } catch (IOException e) {
             e.printStackTrace();
+        }finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         return mapOfProperties;
     }

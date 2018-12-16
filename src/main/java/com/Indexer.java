@@ -1,8 +1,8 @@
-package sample;
+package com;
 
-//import org.json.JSONObject;
 
 import sun.awt.Mutex;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -26,8 +26,9 @@ public class Indexer {
     AtomicInteger uniqueTerm = new AtomicInteger(0);//count the number of unique term
     private AtomicInteger lastID = new AtomicInteger(0);
     private StringBuilder documentsList = new StringBuilder();//IDnumber=docID;max_tf;uniqueterms;city;language;title
-    public CityAPI api = new CityAPI();
+    private CityAPI api = new CityAPI();
     boolean ifStem;
+    private LinkedHashSet<String> hash;
 
     /**
      * c'tor
@@ -38,16 +39,15 @@ public class Indexer {
     public Indexer(String diretory_name, boolean ifStem) {
         d_path = diretory_name;
         this.ifStem = ifStem;
-        boolean b;
         File dir = new File(diretory_name);
         //create all files and connect them with mapper and initialize the fields.
         File file;
         for (char c = 'a'; c <= 'z'; c++) {
             file = new File(dir, c + "" + (ifStem ? "stem" : "nostem"));
             try {
-                b = file.createNewFile();//remove b=
+                file.createNewFile();
             } catch (IOException e) {
-                System.out.println("problem create file");
+//                System.out.println("problem create file");
                 e.printStackTrace();
             }
             mapper.put(String.valueOf(c), file);
@@ -55,7 +55,7 @@ public class Indexer {
         }
         file = new File(dir, "_" + (ifStem ? "stem" : "nostem"));
         try {
-            b = file.createNewFile();
+            file.createNewFile();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -64,7 +64,7 @@ public class Indexer {
 
         file = new File(dir, "documents.properties");
         try {
-            b = file.createNewFile();//remove b=
+            file.createNewFile();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -72,17 +72,17 @@ public class Indexer {
 
         file = new File(dir, "cities");
         try {
-            b = file.createNewFile();
+            file.createNewFile();
         } catch (IOException e) {
             e.printStackTrace();
         }
         mapper.put("cities", file);
 
-        mutexOnFiles = new Mutex[29];//0-26 to a-z and numbers, 27 to documents , 28 to cities
+        mutexOnFiles = new Mutex[mapper.size()];//0-26 to a-z and numbers, 27 to documents , 28 to cities
         for (int i1 = 0; i1 < mutexOnFiles.length; i1++) {
             mutexOnFiles[i1] = new Mutex();
         }
-        mutexOnLists = new Mutex[29];//0-26 to a-z and numbers, 27 to documents, 28 to cities
+        mutexOnLists = new Mutex[mapper.size()];//0-26 to a-z and numbers, 27 to documents, 28 to cities
         for (int i1 = 0; i1 < mutexOnLists.length; i1++) {
             mutexOnLists[i1] = new Mutex();
         }
@@ -238,10 +238,11 @@ public class Indexer {
     public void sortFiles() {
         uniqueTerm.set(dictionary.size());//to the alert after index end
         //save maps
-        System.out.println(dictionary.size() + "-" + dictionaryTF.size());
-        MapSaver.saveMap(new TreeMap<String, Integer>(dictionary), d_path + "\\dic"+(ifStem ? "stem" : "nostem"));
+//        System.out.println(dictionary.size() + "-" + dictionaryTF.size());
+        hash = new LinkedHashSet<>(dictionary.keySet());
+        MapSaver.saveMap(new TreeMap<String, Integer>(dictionary), d_path + "\\dic" + (ifStem ? "stem" : "nostem"));
         dictionary.clear();
-        MapSaver.saveMap(new TreeMap<String, Integer>(dictionaryTF), d_path + "\\dicTF"+(ifStem ? "stem" : "nostem"));
+        MapSaver.saveMap(new TreeMap<String, Integer>(dictionaryTF), d_path + "\\dicTF" + (ifStem ? "stem" : "nostem"));
         dictionaryTF.clear();
         char start = 'a';
         char end = 'z';
@@ -253,9 +254,8 @@ public class Indexer {
 
     }
 
-    private void sortFile(File file)
-    {
-        TreeMap<String,String> words = new TreeMap<>();
+    private void sortFile(File file) {
+        TreeMap<String, String> words = new TreeMap<>();
         BufferedReader br = null;
         try {
             br = new BufferedReader(new FileReader(file));
@@ -263,7 +263,11 @@ public class Indexer {
 
             while ((st = br.readLine()) != null) {
                 int index = st.indexOf(';');
-                words.put(st.substring(0, index), st.substring(index));
+                String key = st.substring(0, st.indexOf('~'));
+                if (hash.contains(key.toLowerCase()))
+                    words.put(key.toLowerCase() + st.substring(st.indexOf('~'), st.indexOf(';')), st.substring(index));
+                else
+                    words.put(st.substring(0, index), st.substring(index));
             }
             br.close();
             FileWriter fileWriter = new FileWriter(file, false);
@@ -303,7 +307,6 @@ public class Indexer {
             for (File file1 : list_file) {
                 File filed = new File(String.valueOf(file1.toPath()));
                 boolean b = filed.delete();
-                System.out.println();
             }
             dictionary.clear();
             dictionaryTF.clear();
@@ -312,7 +315,6 @@ public class Indexer {
             docAndexed.set(0);
             uniqueTerm.set(0);
             lastID.set(0);
-
         }
     }
 }
