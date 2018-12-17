@@ -5,14 +5,14 @@ import java.util.*;
 /**
  * This class represent document. here we collect all the data on File
  */
-public class cDocument {
-    String ID;//DOCNO the id of doc
+public class cDocument extends cItem{
+//    String ID;//DOCNO the id of doc
     public String title;
-    public String text;
+//    public String text;
     int max_tf;//the terms that appear the most in the file
     public String city;
     public String language;
-    public HashMap<String, Integer> terms = new HashMap<>();
+//    public HashMap<String, Integer> terms = new HashMap<>();
     LinkedHashSet cityPosition = new LinkedHashSet();
 
 

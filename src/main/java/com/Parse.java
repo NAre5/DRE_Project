@@ -62,7 +62,7 @@ public class Parse {
         //send each doc to thread
         for (int i = 0; i < docs.length; i++) {
             document = docs[i];
-            Future<cDocument> fpd = parsers_pool.submit(new Parser(document));
+            Future<cDocument> fpd = parsers_pool.submit(new Parser(document, ifStem));
             futures[i] = fpd;
         }
 
@@ -287,18 +287,25 @@ public class Parse {
     /**
      * This class is thread that get doc and return the document with dictionary of terms
      */
-    class Parser implements Callable<cDocument> {
+    static class Parser implements Callable<cDocument> {
         private cDocument document;
+        boolean ifstem;
 
 
-        Parser(cDocument document) {
+        Parser(cDocument document, boolean ifstem) {
             this.document = document;
+            this.ifstem = ifstem;
         }
 
         @Override
         public cDocument call() {
-            String[] tokens = document.text.replaceAll("\\.\\.+|--+", " ").replaceAll(",((?<=[0-9])|(?=[0-9]))","").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(\\?><}{_\\[\\]]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
-            document.text = "";//release memory
+            return (cDocument) parse(document,ifstem);
+        }
+
+        public static cItem parse(cItem item, boolean ifStem){
+            boolean isDoc = item instanceof cDocument;
+            String[] tokens = item.text.replaceAll("\\.\\.+|--+", " ").replaceAll(",((?<=[0-9])|(?=[0-9]))", "").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(\\?><}{_\\[\\]]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
+            item.text = "";//release memory
             int tokenLength = tokens.length;
             String term;
             for (int i = 0; i < tokenLength; i++) {
@@ -306,8 +313,8 @@ public class Parse {
                 if (tokens[i].equals("") || stopWords.contains(tokens[i].toLowerCase()))//not need to save
                     continue;
                 if (isSimpleTerm(tokens[i])) {
-                    if (term.toLowerCase().equals(document.city.toLowerCase()))//to cities index.
-                        document.cityPosition.add(i);
+                    if (isDoc && term.toLowerCase().equals(item.city.toLowerCase()))//to cities index.
+                        ((cDocument)item).cityPosition.add(i);
                     term = tokens[i];
                 } else if (tokens[i].startsWith("$") && isDoubleNumber(tokens[i].replace("$", ""))) {//price rule
                     try {
@@ -365,30 +372,31 @@ public class Parse {
                     if (Character.isLowerCase(term.charAt(0))) {
                         Integer df;
                         term = term.toLowerCase();
-                        if ((df = document.terms.remove(term.toUpperCase())) != null) {
-                            document.terms.put(term, df);
+                        if ((df = item.terms.remove(term.toUpperCase())) != null) {
+                            item.terms.put(term, df);
                         }
                     } else {
-                        if (document.terms.containsKey(term.toLowerCase())) {
+                        if (item.terms.containsKey(term.toLowerCase())) {
                             term = term.toLowerCase();
                         } else
                             term = term.toUpperCase();
                     }
 
-                    document.terms.put(term, document.terms.getOrDefault(term, 0) + 1);
+                    item.terms.put(term, item.terms.getOrDefault(term, 0) + 1);
                 }
             }
             //save the max_tf
             try {
-                document.max_tf = Collections.max(document.terms.values());
+                ((cDocument)item).max_tf = Collections.max(item.terms.values());
             } catch (Exception ignore) {//if the map empty
             }
             tokens = null;
             //do stemming if need
-            if (ifStem)
-                document.stem_dictionary(new Stemmer());
-            return document;
+            if (isDoc && ifStem)
+                ((cDocument)item).stem_dictionary(new Stemmer());
+            return item;
         }
+
     }
 }
 
