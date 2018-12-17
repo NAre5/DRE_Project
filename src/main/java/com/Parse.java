@@ -314,7 +314,7 @@ public class Parse {
                 if (tokens[i].equals("") || stopWords.contains(tokens[i].toLowerCase()))//not need to save
                     continue;
                 if (isSimpleTerm(tokens[i])) {
-                    if (isDoc && term.toLowerCase().equals(item.city.toLowerCase()))//to cities index.
+                    if (isDoc && term.toLowerCase().equals(((cDocument) item).city.toLowerCase()))//to cities index.
                         ((cDocument) item).cityPosition.add(i);
                     term = tokens[i];
                 } else if (tokens[i].startsWith("$") && isDoubleNumber(tokens[i].replace("$", ""))) {//price rule
@@ -389,13 +389,14 @@ public class Parse {
             }
             //save the max_tf
             try {
-                ((cDocument) item).max_tf = Collections.max(item.terms.values());
+                if (isDoc)
+                    ((cDocument) item).max_tf = Collections.max(item.terms.values());
             } catch (Exception ignore) {//if the map empty
             }
             tokens = null;
             if (isDoc) {
                 cDocument.sumOfDoclenth.addAndGet(docLenth);
-                ((cDocument)item).docLenth=docLenth;
+                ((cDocument) item).docLenth = docLenth;
             }
 
             //do stemming if need
