@@ -99,11 +99,11 @@ public class Indexer {
      * @param document
      */
     public void andex(cDocument document) {
-        int docIDnumber = lastID.getAndAdd(1);//IDnumber=docID;max_tf;uniqueterms;city;language;title
-        documentsList.append(docIDnumber).append("=").append(document.ID).append(";").append(document.max_tf).append(";").append(document.terms.size())
+        int docIDnumber = lastID.getAndAdd(1);//IDnumber=docID;max_tf;docLenth;uniqueterms;city;language;title
+        mutexOnLists[27].lock();
+        documentsList.append(docIDnumber).append("=").append(document.ID).append(";").append(document.max_tf).append(";").append(document.docLenth).append(";").append(document.terms.size())
                 .append(";").append(document.city).append(";").append(document.language).append(";").append(document.title).append("\n");
-
-
+        mutexOnLists[27].unlock();
         if (!document.city.equals("")) {
             mutexOnLists[28].lock();
             String docCityInfo = "{" + document.ID + Arrays.toString(document.cityPosition.toArray()) + "}";
@@ -255,27 +255,29 @@ public class Indexer {
     }
 
     private void sortFile(File file) {
-        TreeMap<String, String> words = new TreeMap<>();
+        TreeMap<String, StringBuilder> words = new TreeMap<>();
         BufferedReader br = null;
         try {
             br = new BufferedReader(new FileReader(file));
             String st;
 
             while ((st = br.readLine()) != null) {
-                int index = st.indexOf(';');
-                String key = st.substring(0, st.indexOf('~'));
+                int index = st.indexOf('~');
+                String key = st.substring(0, index);
                 if (hash.contains(key.toLowerCase()))
-                    words.put(key.toLowerCase() + st.substring(st.indexOf('~'), st.indexOf(';')), st.substring(index));
+                    words.put(key.toLowerCase(),words.getOrDefault(key.toLowerCase(),new StringBuilder()).append(st.substring(index+1)).append("|"));
                 else
-                    words.put(st.substring(0, index), st.substring(index));
+                    words.put(key, words.getOrDefault(key,new StringBuilder()).append(st.substring(index+1)).append("|"));
             }
             br.close();
             FileWriter fileWriter = new FileWriter(file, false);
             fileWriter.write("");
             fileWriter.close();
             StringBuilder sb = new StringBuilder();
-            for (Map.Entry<String, String> entry : words.entrySet()) {
-                sb.append(entry.getKey()).append(entry.getValue()).append('\n');
+            for (Map.Entry<String, StringBuilder> entry : words.entrySet()) {
+                StringBuilder value = entry.getValue();
+                value.setLength(value.length()-1);
+                sb.append(entry.getKey()).append("~|").append(value).append('\n');
             }
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, true));
             bufferedWriter.write(sb.toString());//write all together to reduce IO

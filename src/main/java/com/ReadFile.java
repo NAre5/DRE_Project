@@ -134,6 +134,7 @@ public class ReadFile {
                 cDoc.language = language;
                 docToParse[placeInDoc++] = cDoc;
             }
+            cDocument.numOfDoc.addAndGet(docToParse.length);
             docElements.clear();
             docElements = null;
             parser.parse(docToParse);

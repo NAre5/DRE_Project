@@ -1,5 +1,4 @@
-package com;
+package sample;
 
 public class Ranker {
-
 }
