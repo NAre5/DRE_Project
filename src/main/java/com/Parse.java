@@ -299,14 +299,15 @@ public class Parse {
 
         @Override
         public cDocument call() {
-            return (cDocument) parse(document,ifstem);
+            return (cDocument) parse(document, ifstem);
         }
 
-        public static cItem parse(cItem item, boolean ifStem){
+        public static cItem parse(cItem item, boolean ifStem) {
             boolean isDoc = item instanceof cDocument;
             String[] tokens = item.text.replaceAll("\\.\\.+|--+", " ").replaceAll(",((?<=[0-9])|(?=[0-9]))", "").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(\\?><}{_\\[\\]]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
             item.text = "";//release memory
             int tokenLength = tokens.length;
+            int docLenth = 0;
             String term;
             for (int i = 0; i < tokenLength; i++) {
                 term = "";
@@ -314,7 +315,7 @@ public class Parse {
                     continue;
                 if (isSimpleTerm(tokens[i])) {
                     if (isDoc && term.toLowerCase().equals(item.city.toLowerCase()))//to cities index.
-                        ((cDocument)item).cityPosition.add(i);
+                        ((cDocument) item).cityPosition.add(i);
                     term = tokens[i];
                 } else if (tokens[i].startsWith("$") && isDoubleNumber(tokens[i].replace("$", ""))) {//price rule
                     try {
@@ -383,17 +384,23 @@ public class Parse {
                     }
 
                     item.terms.put(term, item.terms.getOrDefault(term, 0) + 1);
+                    docLenth++;
                 }
             }
             //save the max_tf
             try {
-                ((cDocument)item).max_tf = Collections.max(item.terms.values());
+                ((cDocument) item).max_tf = Collections.max(item.terms.values());
             } catch (Exception ignore) {//if the map empty
             }
             tokens = null;
+            if (isDoc) {
+                cDocument.sumOfDoclenth.addAndGet(docLenth);
+                ((cDocument)item).docLenth=docLenth;
+            }
+
             //do stemming if need
             if (isDoc && ifStem)
-                ((cDocument)item).stem_dictionary(new Stemmer());
+                ((cDocument) item).stem_dictionary(new Stemmer());
             return item;
         }
 
