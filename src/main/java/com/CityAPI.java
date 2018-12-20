@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,7 @@ public class CityAPI {
         Gson gson = new Gson();
         try {
             InputStream is = getClass().getResourceAsStream("json.json");
-            reader = new JsonReader(new InputStreamReader(is, "UTF-8"));
+            reader = new JsonReader(new InputStreamReader(is, StandardCharsets.UTF_8));
             reader.beginArray();
             while (reader.hasNext()) {
                 Country country = gson.fromJson(reader, Country.class);

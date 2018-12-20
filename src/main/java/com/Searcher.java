@@ -5,6 +5,7 @@ import org.jsoup.nodes.Document;
 
 import org.jsoup.nodes.Element;
 import org.jsoup.select.*;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -13,10 +14,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Searcher {
 
@@ -58,8 +56,28 @@ public class Searcher {
                 }
             }
         }
+        Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary);
+        // Create a list from elements of HashMap
+        List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());
 
-        return Ranker.rank(cquery, postings_dir, ifStem);
+        // Sort the list
+        Collections.sort(list, new Comparator<Map.Entry<String, Double>>() {
+            public int compare(Map.Entry<String, Double> o1,
+                               Map.Entry<String, Double> o2) {
+                return (o2.getValue()).compareTo(o1.getValue());
+            }
+        });
+        List<String> temp = new LinkedList<>();
+        int i = 50;
+        for (Map.Entry<String, Double> aa : list) {
+            if (aa.getValue() > 0) {
+                temp.add(aa.getKey());
+                i--;
+            }
+            if (i == 0)
+                break;
+        }
+        return temp;
     }
 
 
@@ -67,7 +85,8 @@ public class Searcher {
 //        search(Paths.get("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\queries.txt"), false, false);
     }
 
-    public static void search(Path path, boolean ifStem, boolean ifSemantic,HashSet<String> cities) {
+    public Map<String, List<String>> search(Path path, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
+        Map<String, List<String>> relevantDocToQuery = new HashMap<>();
         Document document = null;
         try {
             document = Jsoup.parse(new String(Files.readAllBytes(path)));
@@ -77,15 +96,37 @@ public class Searcher {
 //        System.out.println(document);
         Elements queries = document.getElementsByTag("top");
         for (Element qElement : queries) {
-            String qid= qElement.getElementsByTag("num").get(0).childNode(0).toString().trim().split(":")[1];
-            String qtitle= qElement.getElementsByTag("title").get(0).text();
-            String qdesc= qElement.getElementsByTag("desc").get(0).childNode(0).toString().trim().split(":")[1];
-            String qnarr= qElement.getElementsByTag("narr").get(0).text();
+            String qid = qElement.getElementsByTag("num").get(0).childNode(0).toString().trim().split(":")[1];
+            String qtitle = qElement.getElementsByTag("title").get(0).text();
+            String qdesc = qElement.getElementsByTag("desc").get(0).childNode(0).toString().trim().split(":")[1];
+            String qnarr = qElement.getElementsByTag("narr").get(0).text();
             System.out.println();
-            cQuery cquery = new cQuery(qid,qtitle,cities);
+            cQuery cquery = new cQuery(qid, qtitle, cities);
+            cquery.description = qdesc;
+            cquery.narrative = qnarr;
+            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary);
+            // Create a list from elements of HashMap
+            List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());
 
+            // Sort the list
+            Collections.sort(list, new Comparator<Map.Entry<String, Double>>() {
+                public int compare(Map.Entry<String, Double> o1,
+                                   Map.Entry<String, Double> o2) {
+                    return (o2.getValue()).compareTo(o1.getValue());
+                }
+            });
+            List<String> temp = new LinkedList<>();
+            int i = 50;
+            for (Map.Entry<String, Double> aa : list) {
+                if (aa.getValue() > 0) {
+                    temp.add(aa.getKey());
+                    i--;
+                }
+                if (i == 0)
+                    break;
+            }
+            relevantDocToQuery.put(qid, new LinkedList<>(temp));
         }
-//        document.getElementsByTag("top").get(0).getElementsByTag("desc").get(0).childNode(0)
-
+        return relevantDocToQuery;
     }
 }

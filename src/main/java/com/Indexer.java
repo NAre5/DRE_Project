@@ -1,6 +1,9 @@
 package com;
 
 
+import javafx.collections.transformation.SortedList;
+import javafx.util.Pair;
+import org.python.google.common.collect.TreeMultimap;
 import sun.awt.Mutex;
 
 import java.io.*;
@@ -62,13 +65,13 @@ public class Indexer {
         mapper.put("_", file);
         waitingRecords.put("_", new StringBuilder());
 
-        file = new File(dir, "documents.properties");
+        file = new File(dir, "documents_temp.properties");
         try {
             file.createNewFile();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        mapper.put("documents", file);
+        mapper.put("documents_temp", file);
 
         file = new File(dir, "cities");
         try {
@@ -99,11 +102,7 @@ public class Indexer {
      * @param document
      */
     public void andex(cDocument document) {
-        int docIDnumber = lastID.getAndAdd(1);//IDnumber=docID;max_tf;docLenth;uniqueterms;city;language;title
-        mutexOnLists[27].lock();
-        documentsList.append(docIDnumber).append("=").append(document.ID).append(";").append(document.max_tf).append(";").append(document.docLenth).append(";").append(document.terms.size())
-                .append(";").append(document.city).append(";").append(document.language).append(";").append(document.title).append("\n");
-        mutexOnLists[27].unlock();
+        int docIDnumber = lastID.getAndAdd(1);//IDnumber=docID;max_tf;docLenth;uniqueterms;city;language;title;bigWords
         if (!document.city.equals("")) {
             mutexOnLists[28].lock();
             String docCityInfo = "{" + document.ID + Arrays.toString(document.cityPosition.toArray()) + "}";
@@ -116,6 +115,7 @@ public class Indexer {
             mutexOnLists[28].unlock();
         }
         String term = null;
+        HashMap<String, Integer> bigWords = new HashMap<>();
         Iterator<String> iterator = document.terms.keySet().iterator();
         while (iterator.hasNext()) {
             try {
@@ -123,17 +123,36 @@ public class Indexer {
                 Integer tf = document.terms.get(term);
                 updateDictionary(term, document.terms.get(term));
                 StringBuilder record = new StringBuilder(term).append("~").append(docIDnumber).append(";").append(tf).append("\n");//"term~docIDNumber;tf;
-                char first = term.toString().toLowerCase().substring(0, 1).charAt(0);
+                char first = term.toLowerCase().charAt(0);
                 char key = (mapper.containsKey(String.valueOf(first))) ? first : '_';
                 int index = Character.toLowerCase(key) - 'a';
                 if (index < 0 || index > 25)
                     index = 26;
+                if (Character.isUpperCase(term.charAt(0)))
+                    bigWords.put(term, tf);
                 mutexOnLists[index].lock();
                 waitingRecords.get(String.valueOf(key)).append(record.toString());
                 mutexOnLists[index].unlock();
             } catch (Exception ignore) {
             }
         }
+        List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(bigWords.entrySet());
+
+        //sorting the list with a comparator
+        Collections.sort(list, new Comparator<Map.Entry<String, Integer>>() {
+            public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
+                return (o2.getValue()).compareTo(o1.getValue());
+            }
+        });
+        String[] onlyBigWords = new String[list.size()];
+        int i = 0;
+        for (Map.Entry<String, Integer> entry : list) {
+            onlyBigWords[i++] = entry.getKey();
+        }
+        mutexOnLists[27].lock();
+        documentsList.append(docIDnumber).append("=").append(document.ID).append(";").append(document.max_tf).append(";").append(document.docLenth).append(";").append(document.terms.size())
+                .append(";").append(document.city).append(";").append(document.language).append(";").append(document.title).append(";").append(Arrays.toString(onlyBigWords)).append("\n");
+        mutexOnLists[27].unlock();
         document = null;
 //        docAndexed.getAndAdd(1);
         if (docAndexed.addAndGet(1) % 1000 == 0) {//after 1000 doc we write
@@ -184,7 +203,7 @@ public class Indexer {
         }
         threads[26] = new Thread(new WriterThread(mutexOnFiles[26], mutexOnLists[26], mapper.get("_"), waitingRecords.get("_")));
         threads[26].start();
-        threads[27] = new Thread(new WriterThread(mutexOnFiles[27], mutexOnLists[27], mapper.get("documents"), documentsList));
+        threads[27] = new Thread(new WriterThread(mutexOnFiles[27], mutexOnLists[27], mapper.get("documents_temp"), documentsList));
         threads[27].start();
         for (int i = 0; i < threads.length; i++) {
             try {
@@ -201,6 +220,56 @@ public class Indexer {
      */
     public void writeRestRecords() {
         writeWaitingToPosting();
+        File documentsFile = new File(d_path + "\\documents.properties");
+        try {
+            documentsFile.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        StringBuilder writeTodocuments = new StringBuilder();
+        BufferedReader bf = null;
+
+        try {
+            bf = new BufferedReader(new FileReader(d_path + "\\documents_temp.properties"));
+            String st = null;
+            while ((st = bf.readLine()) != null) {
+//                StringBuilder docData = new StringBuilder(st.substring(0,st.lastIndexOf("[")+1));
+                StringBuilder docData = new StringBuilder(st);
+                int index = docData.lastIndexOf("[")+1;
+                String[] line = docData.substring(index, docData.lastIndexOf("]")).split(", ");
+                docData.setLength(index+1);
+                int counter = 5;
+                for (int i = 0; i < line.length && counter > 0; i++) {
+                    if (dictionary.containsKey(line[i])) {
+                        docData.append(line[i]).append(",");
+                        counter--;
+                    }
+                }
+                docData.setLength(docData.length() - 1);
+                docData.append("]\n");
+                writeTodocuments.append(docData);
+            }
+            bf.close();
+            File documents_temp = new File(d_path + "\\documents_temp.properties");
+            documents_temp.delete();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        BufferedWriter write = null;
+        try {
+            write = new BufferedWriter(new FileWriter(documentsFile, true));
+            write.write(writeTodocuments.toString());
+            write.flush();
+        } catch (IOException | NullPointerException e) {
+            e.printStackTrace();
+        } finally {
+            if (write != null)
+                try {
+                    write.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+        }
         //write to cities//
         StringBuilder citiesText = new StringBuilder();
         for (Map.Entry<String, StringBuilder> sb : cities.entrySet())
@@ -264,9 +333,9 @@ public class Indexer {
                 int index = st.indexOf('~');
                 String key = st.substring(0, index);
                 if (hash.contains(key.toLowerCase()))
-                    words.put(key.toLowerCase(),words.getOrDefault(key.toLowerCase(),new StringBuilder()).append(st.substring(index+1)).append("|"));
+                    words.put(key.toLowerCase(), words.getOrDefault(key.toLowerCase(), new StringBuilder()).append(st.substring(index + 1)).append("|"));
                 else
-                    words.put(key, words.getOrDefault(key,new StringBuilder()).append(st.substring(index+1)).append("|"));
+                    words.put(key, words.getOrDefault(key, new StringBuilder()).append(st.substring(index + 1)).append("|"));
             }
             br.close();
             FileWriter fileWriter = new FileWriter(file, false);
@@ -275,7 +344,7 @@ public class Indexer {
             StringBuilder sb = new StringBuilder();
             for (Map.Entry<String, StringBuilder> entry : words.entrySet()) {
                 StringBuilder value = entry.getValue();
-                value.setLength(value.length()-1);
+                value.setLength(value.length() - 1);
                 sb.append(entry.getKey()).append("~|").append(value).append('\n');
             }
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, true));

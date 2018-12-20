@@ -9,12 +9,12 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class cDocument extends cItem{
 //    String ID;//DOCNO the id of doc
-    public String title;
+String title;
 //    public String text;
     int max_tf;//the terms that appear the most in the file
     int docLenth;
-    public String city;
-    public String language;
+    String city;
+    String language;
 //    public HashMap<String, Integer> terms = new HashMap<>();
     LinkedHashSet cityPosition = new LinkedHashSet();
     static AtomicLong sumOfDoclenth = new AtomicLong(0);
@@ -28,7 +28,7 @@ public class cDocument extends cItem{
 
     /**
      * to do stemming to all of the term
-     * @param stemmer
+     * @param stemmer - the algorithm to stemming
      */
     void stem_dictionary(Stemmer stemmer) {
         HashMap<String, Integer> newTerms = new HashMap<>();
@@ -38,9 +38,9 @@ public class cDocument extends cItem{
                 Integer value = entry.getValue();
                 String term_s = stemmer.stemTerm(key);
                 if (!terms.containsKey(term_s))
-                    newTerms.put(term_s, terms.get(key));
+                    newTerms.put(term_s, value);
                 else
-                    newTerms.put(term_s, terms.get(key) + terms.get(key));
+                    newTerms.put(term_s, newTerms.get(key) + value);
             }
         } catch (Exception e) {
             e.printStackTrace();
