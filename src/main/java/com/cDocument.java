@@ -22,9 +22,8 @@ public class cDocument extends cItem{
 
 
     cDocument(String ID, String title, String text) {
-        this.ID = ID;
+        super(ID,text);
         this.title = title;
-        this.text = text;
     }
 
     /**

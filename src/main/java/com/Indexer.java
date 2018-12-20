@@ -240,9 +240,9 @@ public class Indexer {
         //save maps
 //        System.out.println(dictionary.size() + "-" + dictionaryTF.size());
         hash = new LinkedHashSet<>(dictionary.keySet());
-        MapSaver.saveMap(new TreeMap<String, Integer>(dictionary), d_path + "\\dic" + (ifStem ? "stem" : "nostem"));
+        MapSaver.saveMap(new TreeMap<String, Object>(dictionary), d_path + "\\dic" + (ifStem ? "stem" : "nostem"));
         dictionary.clear();
-        MapSaver.saveMap(new TreeMap<String, Integer>(dictionaryTF), d_path + "\\dicTF" + (ifStem ? "stem" : "nostem"));
+        MapSaver.saveMap(new TreeMap<String, Object>(dictionaryTF), d_path + "\\dicTF" + (ifStem ? "stem" : "nostem"));
         dictionaryTF.clear();
         char start = 'a';
         char end = 'z';
@@ -253,7 +253,6 @@ public class Indexer {
         sortFile(mapper.get(String.valueOf("_")));
 
     }
-
     private void sortFile(File file) {
         TreeMap<String, StringBuilder> words = new TreeMap<>();
         BufferedReader br = null;
@@ -287,6 +286,7 @@ public class Indexer {
             e.printStackTrace();
         }
     }
+
 
 
 //    static byte[] intToBytes(int number, int num_of_bytes) {

@@ -126,6 +126,7 @@ public class Controller {
             StringBuilder showText = new StringBuilder();
             showText.append("The numbers of documents indexed: ").append(numberOfindexDoc).append("\n")
                     .append("The number of unique terms: ").append(uniqueTerm).append("\n").append("The time is takes: ").append(CreateIndexTime).append(" sec");
+            model.initSearch(lastPath);
             showAlert(Alert.AlertType.INFORMATION, showText.toString());
 //            progressBar.setVisible(false);
         }

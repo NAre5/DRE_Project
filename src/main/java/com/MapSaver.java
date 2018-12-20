@@ -16,7 +16,7 @@ public class MapSaver {
      * @param map - the map to save
      * @param path - to tis path
      */
-    public static void saveMap(Map<String, Integer> map, String path) {
+    public static void saveMap(Map<String, Object> map, String path) {
         path = path + ".properties";
         File file = new File(path);
         if (!file.exists()) {
@@ -27,7 +27,7 @@ public class MapSaver {
             }
         }
         Properties properties = new Properties();
-        for (Map.Entry<String, Integer> entry : map.entrySet()) {
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
             properties.put(entry.getKey(), entry.getValue().toString());
         }
         FileOutputStream fout = null;

@@ -12,7 +12,7 @@ public class Model {
      * the main object
      */
     ReadFile readFile;
-
+    Searcher searcher;
 
     public void startIndexing(String corpusPath, String stopWordsPath,String postingsPath, boolean ifStem)
     {
@@ -32,5 +32,9 @@ public class Model {
      */
     public Map<String,String> getDictionary(){
         return new TreeMap<>(MapSaver.loadMap(readFile.parser.indexer.d_path + "\\dicTF" + (readFile.parser.ifStem ? "stem" : "nostem")));
+    }
+
+    public void initSearch(String postings_dir) {
+        searcher = new Searcher(postings_dir);
     }
 }

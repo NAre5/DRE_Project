@@ -5,6 +5,12 @@ import java.util.HashMap;
 public abstract class cItem {
     String ID;//DOCNO the id of doc
     public String text;
-    public String city;
+
     public HashMap<String, Integer> terms = new HashMap<>();
+
+    public cItem(String ID, String text) {
+        this.ID = ID;
+        this.text = text;
+
+    }
 }

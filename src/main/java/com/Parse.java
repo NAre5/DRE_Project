@@ -304,7 +304,7 @@ public class Parse {
 
         public static cItem parse(cItem item, boolean ifStem) {
             boolean isDoc = item instanceof cDocument;
-            String[] tokens = item.text.replaceAll("\\.\\.+|--+", " ").replaceAll(",((?<=[0-9])|(?=[0-9]))", "").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(\\?><}{_\\[\\]]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
+            String[] tokens = item.text.replaceAll("\\.\\.+|--+", " ").replaceAll("(?<=[0-9]),(?=[0-9])", "").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(\\?><}{_\\[\\]]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
             item.text = "";//release memory
             int tokenLength = tokens.length;
             int docLenth = 0;
