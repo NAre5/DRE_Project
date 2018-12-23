@@ -37,4 +37,6 @@ public class Model {
     public void initSearch(String postings_dir) {
         searcher = new Searcher(postings_dir);
     }
+
+
 }

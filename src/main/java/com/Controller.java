@@ -2,7 +2,6 @@ package com;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -16,21 +15,22 @@ import java.util.*;
 
 public class Controller {
 
+    public Button fileChooser_postings_in;
+    public TextField text_postings_in;
     Model model = new Model();
     @FXML
-    public ProgressBar progressBar;
     public Button fileChooser_stop_words;
-    public Button fileChooser_postings;
+    public Button fileChooser_postings_out;
     public Button fileChooser_corpus;
     public Button button_reset;
     public Button button_showDictionary;
     public Button button_loadDictionary;
     public TextField text_stop_words;
-    public TextField text_postings;
+    public TextField text_postings_out;
     public TextField text_corpus;
-    public CheckBox checkBox_stemming;
+    public CheckBox checkBox_stemming_IN;
     public GridPane data;
-    public ComboBox<String> languagesComboBox;
+    public ComboBox<String> comboBox_languages;
 
     private String lastPath;
     public Map<String, String> map;
@@ -41,8 +41,7 @@ public class Controller {
         button_reset.setDisable(true);
         button_loadDictionary.setDisable(true);
         button_showDictionary.setDisable(true);
-        languagesComboBox.setDisable(true);
-        progressBar.setVisible(false);
+        comboBox_languages.setDisable(true);
     }
 
     /**
@@ -66,10 +65,10 @@ public class Controller {
      */
     public void choose_postings_file(ActionEvent actionEvent) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        File file = directoryChooser.showDialog(fileChooser_postings.getScene().getWindow());
+        File file = directoryChooser.showDialog(fileChooser_postings_out.getScene().getWindow());
         if (file == null)
             return;
-        text_postings.setText(file.getPath());
+        text_postings_out.setText(file.getPath());
     }
 
     /**
@@ -91,7 +90,7 @@ public class Controller {
      * @param actionEvent - press on create button
      */
     public void createInvertedIndex(ActionEvent actionEvent) {
-        if (text_corpus.getText().equals("") || text_postings.getText().equals("") || text_stop_words.getText().equals("")) {//check that all of fields are not empty
+        if (text_corpus.getText().equals("") || text_postings_out.getText().equals("") || text_stop_words.getText().equals("")) {//check that all of fields are not empty
             showAlert(Alert.AlertType.ERROR, "Please fill all paths");
         } else {
 //            progressBar.setProgress(0);
@@ -104,23 +103,23 @@ public class Controller {
                 showAlert(Alert.AlertType.ERROR, "stop_words text: illegal path");
                 return;
             }
-            if (!new File(text_postings.getText()).exists()) {
+            if (!new File(text_postings_out.getText()).exists()) {
                 showAlert(Alert.AlertType.ERROR, "postings text: illegal path");
                 return;
             }
 
-            lastPath = text_postings.getText();//save the last path of the last time we save the dictionary
+            lastPath = text_postings_out.getText();//save the last path of the last time we save the dictionary
             long startTime = System.nanoTime();//start to calculate how much the the process takes
-            model.startIndexing(text_corpus.getText(), text_stop_words.getText(), text_postings.getText(), checkBox_stemming.isSelected());
+            model.startIndexing(text_corpus.getText(), text_stop_words.getText(), text_postings_out.getText(), checkBox_stemming_IN.isSelected());
             long CreateIndexTime = (System.nanoTime() - startTime) / 1000000000;
             button_reset.setDisable(false);//after indexing w can reset the files
             button_loadDictionary.setDisable(false);
             button_showDictionary.setDisable(false);
 
             for (String language : model.readFile.languages) {//show te language
-                languagesComboBox.getItems().add(language);
+                comboBox_languages.getItems().add(language);
             }
-            languagesComboBox.setDisable(false);//after add all language we can show them
+            comboBox_languages.setDisable(false);//after add all language we can show them
             int numberOfindexDoc = model.readFile.parser.indexer.docAndexed.get();
             int uniqueTerm = model.readFile.parser.indexer.uniqueTerm.get();
             StringBuilder showText = new StringBuilder();
@@ -203,9 +202,20 @@ public class Controller {
         button_reset.setDisable(true);
         button_loadDictionary.setDisable(true);
         button_showDictionary.setDisable(true);
-        languagesComboBox.getItems().clear();
-        languagesComboBox.setDisable(true);
+        comboBox_languages.getItems().clear();
+        comboBox_languages.setDisable(true);
         showAlert(Alert.AlertType.INFORMATION, "done reset");
 //        progressBar.setProgress();
+    }
+
+    public void choose_postings_file_and_load(ActionEvent actionEvent) {
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
+        if (file == null)
+            return;
+        text_postings_in.setText(file.getPath());
+        //Todo open "wait..." window with text: "loading..."
+
+        lastPath = file.getPath();
     }
 }
