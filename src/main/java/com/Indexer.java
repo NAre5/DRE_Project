@@ -105,7 +105,7 @@ public class Indexer {
         int docIDnumber = lastID.getAndAdd(1);//IDnumber=docID;max_tf;docLenth;uniqueterms;city;language;title;bigWords
         if (!document.city.equals("")) {
             mutexOnLists[28].lock();
-            String docCityInfo = "{" + document.ID + Arrays.toString(document.cityPosition.toArray()) + "}";
+            String docCityInfo = "|" + document.ID + Arrays.toString(document.cityPosition.toArray());
             if (cities.containsKey(document.city)) {
                 cities.put(document.city, cities.get(document.city).append(docCityInfo));
             } else {
@@ -273,7 +273,7 @@ public class Indexer {
         //write to cities//
         StringBuilder citiesText = new StringBuilder();
         for (Map.Entry<String, StringBuilder> sb : cities.entrySet())
-            citiesText.append(sb.getKey() + "-->").append(sb.getValue()).append("\n");
+            citiesText.append(sb.getKey() + "~").append(sb.getValue()).append("\n");
         Thread thread = new Thread(new WriterThread(mutexOnFiles[28], mutexOnLists[28], mapper.get("cities"), citiesText));
         thread.start();
         try {

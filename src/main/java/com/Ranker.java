@@ -2,21 +2,73 @@ package com;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 public class Ranker {
 
-    public static Map<String,Double> rank(cQuery query, String d_path, boolean ifStem, HashMap<String, String> documents, HashMap<String, String> dictionary) {
+    public static Map<String, Double> rank(cQuery query, String d_path, boolean ifStem, HashMap<String, String> documents, HashMap<String, String> dictionary) {
+        ExecutorService reader_pool = Executors.newCachedThreadPool();
         HashMap<String, Double> documentsRank = new HashMap<>();
         HashMap<String, String[]> termToDocTf = new HashMap<>();
         HashMap<Character, HashSet<String>> querytermOfChar = new HashMap<>();
-        for (String queryTerm : query.terms.keySet()) {
+        for (String queryTerm : query.terms.keySet()) {//devide the term in the query to set of each char to make the search in one time
             Character firstChar = (Character.isLetter(queryTerm.charAt(0)) ? queryTerm.charAt(0) : '_');
             HashSet<String> setOfTerms = querytermOfChar.getOrDefault(firstChar, new LinkedHashSet<>());
             setOfTerms.add(queryTerm);
             querytermOfChar.put(firstChar, setOfTerms);
         }
-        for (Character ch : querytermOfChar.keySet()) {
-            termToDocTf.putAll(getLinesFromPosting(querytermOfChar.get(ch), ch, d_path, ifStem));
+        List<Future<Map<String, String[]>>> futures = new LinkedList<>();
+
+        for (Character ch : querytermOfChar.keySet()) {//start to search for lines of each term in the query
+//            termToDocTf.putAll(getLinesFromPosting(querytermOfChar.get(ch), ch, d_path, ifStem));
+            Future<Map<String, String[]>> future = reader_pool.submit(new ReadThread(querytermOfChar.get(ch), ch, d_path, ifStem));
+            futures.add(future);
+        }
+
+        HashSet<String> documentsWithCities = new LinkedHashSet<>();
+        HashMap<Character, HashSet<String>> citytermOfChar = new HashMap<>();
+
+        for (String city : query.cities) {//devide the cities to set of every char to make the search in one time
+            Character firstChar = (Character.isLetter(city.charAt(0)) ? Character.toLowerCase(city.charAt(0)) : '_');
+            HashSet<String> setOfcities = citytermOfChar.getOrDefault(firstChar, new LinkedHashSet<>());
+            setOfcities.add(city);
+            setOfcities.add(city.toLowerCase());
+            citytermOfChar.put(firstChar, setOfcities);
+        }
+
+        for (Character ch : citytermOfChar.keySet()) {//start the search of every set of cities.
+            Future<Map<String, String[]>> future = reader_pool.submit(new ReadThread(citytermOfChar.get(ch), ch, d_path, ifStem));
+            futures.add(future);
+//            Map<String, String[]> citiesOfChar = getLinesFromPosting(citytermOfChar.get(ch), ch, d_path, ifStem);
+//            for (Map.Entry<String, String[]> entry : citiesOfChar.entrySet()) {
+//                for (int i = 1; i < entry.getValue().length; i++) {
+//                    documentsWithCities.add(entry.getValue()[i].split(";")[0]);
+//                }
+//            }
+        }
+
+        for (Future<Map<String, String[]>> future : futures) {//collect the line of the terms
+            try {
+                termToDocTf.putAll(future.get());
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+        futures.clear();
+
+
+        for (Future<Map<String, String[]>> future : futures) {//collect the lines of the cities
+            Map<String, String[]> citiesOfChar = null;
+            try {
+                citiesOfChar = future.get();
+                for (Map.Entry<String, String[]> entry : citiesOfChar.entrySet()) {
+                    for (int i = 1; i < entry.getValue().length; i++) {
+                        documentsWithCities.add(entry.getValue()[i].split(";")[0]);
+                    }
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
         }
         double avdl = (double) cDocument.sumOfDoclenth.get() / cDocument.numOfDoc.get();
         double logMplus1 = Math.log((cDocument.numOfDoc.get() + 1));
@@ -30,7 +82,7 @@ public class Ranker {
             for (int i = 1; i < docTF.length; i++) {
                 String docID = docTF[i].split(";")[0];
                 String[] dataOfDoc = documents.get(docID).split(";");
-                if(!query.cities.contains(dataOfDoc[4]))
+                if (!(query.cities.contains(dataOfDoc[4]) || documentsWithCities.contains(docID)))
                     continue;
                 String docTitle = dataOfDoc[6];
                 int tf = Integer.parseInt(docTF[i].split(";")[1]);
@@ -59,7 +111,6 @@ public class Ranker {
                     terms.remove(term);
                 }
             }
-            return linesOfterms;
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -71,31 +122,49 @@ public class Ranker {
                 }
             }
         }
-        return null;
+        return linesOfterms;
+    }
+}
+
+class ReadThread implements Callable<Map<String, String[]>> {
+    HashSet<String> terms;
+    char firstchar;
+    String path;
+    boolean ifStem;
+
+    public ReadThread(HashSet<String> terms, char firstchar, String path, boolean ifStem) {
+        this.terms = terms;
+        this.firstchar = firstchar;
+        this.path = path;
+        this.ifStem = ifStem;
     }
 
-
-    public static double cosineSimilarity(String vectorA, String vectorB) {
-        String[] vectorAsplit = vectorA.split(" ");
-        String[] vectorBsplit = vectorB.split(" ");
-        double[] vectorAdouble = new double[vectorAsplit.length];
-        double[] vectorBdouble = new double[vectorBsplit.length];
-        for (int i = 0; i < vectorAsplit.length; i++) {
-            vectorAdouble[i] = Double.parseDouble(vectorAsplit[i]);
-            vectorBdouble[i] = Double.parseDouble(vectorBsplit[i]);
+    @Override
+    public Map<String, String[]> call() {
+        Map<String, String[]> linesOfterms = new HashMap<>();
+        File file = new File(path + "\\" + firstchar + (ifStem ? "stem" : "nostem"));
+        BufferedReader bufferedReader = null;
+        try {
+            bufferedReader = new BufferedReader(new FileReader(file));
+            String st;
+            while ((st = bufferedReader.readLine()) != null) {
+                String term = st.substring(0, st.indexOf("~"));
+                if (terms.contains(term)) {
+                    linesOfterms.put(term, st.split("\\|"));
+                    terms.remove(term);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (bufferedReader != null) {
+                try {
+                    bufferedReader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-        return cosineSimilarity(vectorAdouble, vectorBdouble);
-    }
-
-    public static double cosineSimilarity(double[] vectorA, double[] vectorB) {
-        double dotProduct = 0.0;
-        double normA = 0.0;
-        double normB = 0.0;
-        for (int i = 0; i < vectorA.length; i++) {
-            dotProduct += vectorA[i] * vectorB[i];
-            normA += Math.pow(vectorA[i], 2);
-            normB += Math.pow(vectorB[i], 2);
-        }
-        return dotProduct / ((Math.sqrt(normA) * Math.sqrt(normB)));
+        return linesOfterms;
     }
 }

@@ -314,7 +314,7 @@ public class Parse {
                 if (tokens[i].equals("") || stopWords.contains(tokens[i].toLowerCase()))//not need to save
                     continue;
                 if (isSimpleTerm(tokens[i])) {
-                    if (isDoc && term.toLowerCase().equals(((cDocument) item).city.toLowerCase()))//to cities index.
+                    if (isDoc && tokens[i].toLowerCase().equals(((cDocument) item).city.toLowerCase()))//to cities index.
                         ((cDocument) item).cityPosition.add(i);
                     term = tokens[i];
                 } else if (tokens[i].startsWith("$") && isDoubleNumber(tokens[i].replace("$", ""))) {//price rule
