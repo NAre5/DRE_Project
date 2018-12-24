@@ -9,6 +9,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.stage.*;
 import javafx.util.Pair;
+import org.controlsfx.control.CheckComboBox;
 
 import java.io.File;
 import java.util.*;
@@ -17,6 +18,9 @@ public class Controller {
 
     public Button fileChooser_postings_in;
     public TextField text_postings_in;
+    public TextField text_queries_path;
+    public Button fileChooser_queries_file;
+    public CheckComboBox comboBox_cities;
     Model model = new Model();
     @FXML
     public Button fileChooser_stop_words;
@@ -125,7 +129,10 @@ public class Controller {
             StringBuilder showText = new StringBuilder();
             showText.append("The numbers of documents indexed: ").append(numberOfindexDoc).append("\n")
                     .append("The number of unique terms: ").append(uniqueTerm).append("\n").append("The time is takes: ").append(CreateIndexTime).append(" sec");
-//            model.initSearch(lastPath);
+            model.initSearch(lastPath);
+            comboBox_cities.getItems().clear();
+//            comboBox_cities.getItems().
+
             showAlert(Alert.AlertType.INFORMATION, showText.toString());
 //            progressBar.setVisible(false);
         }
@@ -217,5 +224,22 @@ public class Controller {
         //Todo open "wait..." window with text: "loading..."
 
         lastPath = file.getPath();
+    }
+
+    public void search_query(ActionEvent actionEvent) {
+
+
+    }
+
+    public void open_fileChooser_queries_file(ActionEvent actionEvent) {
+        FileChooser fileChooser = new FileChooser();
+        File file = fileChooser.showOpenDialog(fileChooser_queries_file.getScene().getWindow());
+        if (file == null)
+            return;
+        text_queries_path.setText(file.getPath());
+    }
+
+    public void search_queries_file(ActionEvent actionEvent) {
+
     }
 }

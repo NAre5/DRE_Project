@@ -7,11 +7,11 @@ import java.util.concurrent.*;
 public class Ranker {
 
     public static Map<String, Double> rank(cQuery query, String d_path, boolean ifStem, HashMap<String, String> documents, HashMap<String, String> dictionary) {
-        ExecutorService reader_pool = Executors.newCachedThreadPool();
+        ExecutorService reader_pool = Executors.newCachedThreadPool();//Todo change to limit (8) threads?
         HashMap<String, Double> documentsRank = new HashMap<>();
         HashMap<String, String[]> termToDocTf = new HashMap<>();
         HashMap<Character, HashSet<String>> querytermOfChar = new HashMap<>();
-        for (String queryTerm : query.terms.keySet()) {//devide the term in the query to set of each char to make the search in one time
+        for (String queryTerm : query.terms.keySet()) {//divide the term in the query to set of each char to make the search in one time
             Character firstChar = (Character.isLetter(queryTerm.charAt(0)) ? queryTerm.charAt(0) : '_');
             HashSet<String> setOfTerms = querytermOfChar.getOrDefault(firstChar, new LinkedHashSet<>());
             setOfTerms.add(queryTerm);
@@ -29,7 +29,8 @@ public class Ranker {
         HashSet<String> documentsWithCities = new LinkedHashSet<>();
         HashMap<Character, HashSet<String>> citytermOfChar = new HashMap<>();
 
-        for (String city : query.cities) {//devide the cities to set of every char to make the search in one time
+        //Todo maybe because there arnt much cities unnecessary
+        for (String city : query.cities) {//divide the cities to set of every char to make the search in one time
             Character firstChar = (Character.isLetter(city.charAt(0)) ? Character.toLowerCase(city.charAt(0)) : '_');
             HashSet<String> setOfcities = citytermOfChar.getOrDefault(firstChar, new LinkedHashSet<>());
             setOfcities.add(city);
@@ -76,7 +77,7 @@ public class Ranker {
         final double k = 1.5;
         final double TITLE = 5;
         for (String queryTerm : query.terms.keySet()) {
-            if (!dictionary.containsKey(queryTerm))//TODO check if we need case sensative
+            if (!dictionary.containsKey(queryTerm))//TODO check if we need case sensitive
                 continue;
             String[] docTF = termToDocTf.get(queryTerm);
             for (int i = 1; i < docTF.length; i++) {
@@ -86,12 +87,12 @@ public class Ranker {
                     continue;
                 String docTitle = dataOfDoc[6];
                 int tf = Integer.parseInt(docTF[i].split(";")[1]);
-                String nameDoc = dataOfDoc[0].split("=")[1];
+                String docName = dataOfDoc[0].split("=")[1];
                 int docLenth = Integer.parseInt(dataOfDoc[2]);
                 double numerator = query.terms.get(queryTerm) * ((docTitle.contains(queryTerm.toLowerCase()) || docTitle.contains(queryTerm.toLowerCase().toUpperCase())) ? TITLE : 1) * (k + 1) * tf * (logMplus1 - Math.log(Integer.parseInt(dictionary.get(queryTerm))));
                 double denominator = tf + k * (1 - b + b * (docLenth / avdl));
                 double bm25TodocAndTerm = numerator / denominator;
-                documentsRank.put(nameDoc, documentsRank.getOrDefault(nameDoc, 0.0) + bm25TodocAndTerm);
+                documentsRank.put(docName, documentsRank.getOrDefault(docName, 0.0) + bm25TodocAndTerm);
             }
         }
         return documentsRank;
@@ -123,6 +124,11 @@ public class Ranker {
             }
         }
         return linesOfterms;
+    }
+
+    public static String[] getDocumentEnteties(String docName){
+
+        return null;
     }
 }
 

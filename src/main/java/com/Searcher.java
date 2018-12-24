@@ -43,7 +43,7 @@ public class Searcher {
 
     public List<String> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
         dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "dic" + (ifStem ? "stem" : "nostem")));//Todo replace
-        cQuery cquery = new cQuery(String.valueOf(Math.random() * 100000), query, cities);//Todo change ID
+        cQuery cquery = new cQuery(String.valueOf(Math.random() * 1000), query, cities);//Todo change ID
         cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
 
         if (ifSemantic) {
@@ -56,6 +56,7 @@ public class Searcher {
                 }
             }
         }
+
         Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary);
         // Create a list from elements of HashMap
         List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());
@@ -100,10 +101,24 @@ public class Searcher {
             String qtitle = qElement.getElementsByTag("title").get(0).text();
             String qdesc = qElement.getElementsByTag("desc").get(0).childNode(0).toString().trim().split(":")[1];
             String qnarr = qElement.getElementsByTag("narr").get(0).text();
-            System.out.println();
+//            System.out.println();
             cQuery cquery = new cQuery(qid, qtitle, cities);
             cquery.description = qdesc;
             cquery.narrative = qnarr;
+
+            cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
+
+            if (ifSemantic) {
+                Set<String> termsCopy = new HashSet<>(cquery.terms.keySet());
+                for (String s : termsCopy) {
+                    if (termToCloseTerms.containsKey(s.toLowerCase())) {
+                        for (String s2 : termToCloseTerms.get(s)) {
+                            cquery.terms.put(s2, 1);
+                        }
+                    }
+                }
+            }
+
             Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary);
             // Create a list from elements of HashMap
             List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());

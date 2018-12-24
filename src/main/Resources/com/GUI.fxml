@@ -12,6 +12,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
+<?import org.controlsfx.control.CheckComboBox?>
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.Controller">
     <children>
         <GridPane layoutX="5.0" layoutY="115.0" prefHeight="85.0" prefWidth="592.0">
@@ -84,7 +85,7 @@
             <children>
                 <Label text="Insert Query as Text:" underline="true" />
                 <TextField fx:id="text_query" GridPane.columnIndex="1" />
-                <Button fx:id="fileChooser_query" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="search query" GridPane.columnIndex="2" />
+                <Button fx:id="button_search_query" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#search_query" text="search query" GridPane.columnIndex="2" />
             </children>
         </GridPane>
         <GridPane layoutX="7.0" layoutY="444.0" prefHeight="55.0" prefWidth="592.0">
@@ -108,8 +109,8 @@
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                     </rowConstraints>
                     <children>
-                        <Button fx:id="fileChooser_queries_file" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="select queries file" />
-                        <Button fx:id="search_queries_file" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="126.0" text="search queries" GridPane.rowIndex="1" />
+                        <Button fx:id="fileChooser_queries_file" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#open_fileChooser_queries_file" text="select queries file" />
+                        <Button fx:id="button_search_queries_file" disable="true" mnemonicParsing="false" onAction="#search_queries_file" prefHeight="25.0" prefWidth="126.0" text="search queries" GridPane.rowIndex="1" />
                     </children>
                 </GridPane>
             </children>
@@ -126,7 +127,8 @@
         </Label>
         <CheckBox fx:id="checkBox_stemming_Q" layoutX="106.0" layoutY="513.0" mnemonicParsing="false" text="Stemming?" />
         <CheckBox fx:id="checkBox_semantic" layoutX="219.0" layoutY="513.0" mnemonicParsing="false" text="Semantic?" />
-        <ComboBox fx:id="comboBox_cities" layoutX="351.0" layoutY="509.0" prefWidth="150.0" promptText="choose cities" />
+        <CheckComboBox fx:id="comboBox_cities" layoutX="351.0" layoutY="509.0" prefWidth="150.0"/>
+        <!--promptText="choose cities"-->
         <GridPane layoutX="7.0" layoutY="304.0" prefHeight="38.0" prefWidth="592.0">
             <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="200.0" minWidth="10.0" prefWidth="184.0" />
