@@ -17,12 +17,13 @@ public class Ranker {
             setOfTerms.add(queryTerm);
             querytermOfChar.put(firstChar, setOfTerms);
         }
-        List<Future<Map<String, String[]>>> futures = new LinkedList<>();
+        List<Future<Map<String, String[]>>> futuresTerms = new LinkedList<>();
+        List<Future<Map<String, String[]>>> futuresCities = new LinkedList<>();
 
         for (Character ch : querytermOfChar.keySet()) {//start to search for lines of each term in the query
 //            termToDocTf.putAll(getLinesFromPosting(querytermOfChar.get(ch), ch, d_path, ifStem));
             Future<Map<String, String[]>> future = reader_pool.submit(new ReadThread(querytermOfChar.get(ch), ch, d_path, ifStem));
-            futures.add(future);
+            futuresTerms.add(future);
         }
 
         HashSet<String> documentsWithCities = new LinkedHashSet<>();
@@ -38,7 +39,7 @@ public class Ranker {
 
         for (Character ch : citytermOfChar.keySet()) {//start the search of every set of cities.
             Future<Map<String, String[]>> future = reader_pool.submit(new ReadThread(citytermOfChar.get(ch), ch, d_path, ifStem));
-            futures.add(future);
+            futuresCities.add(future);
 //            Map<String, String[]> citiesOfChar = getLinesFromPosting(citytermOfChar.get(ch), ch, d_path, ifStem);
 //            for (Map.Entry<String, String[]> entry : citiesOfChar.entrySet()) {
 //                for (int i = 1; i < entry.getValue().length; i++) {
@@ -47,17 +48,16 @@ public class Ranker {
 //            }
         }
 
-        for (Future<Map<String, String[]>> future : futures) {//collect the line of the terms
+        for (Future<Map<String, String[]>> future : futuresTerms) {//collect the line of the terms
             try {
                 termToDocTf.putAll(future.get());
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         }
-        futures.clear();
 
 
-        for (Future<Map<String, String[]>> future : futures) {//collect the lines of the cities
+        for (Future<Map<String, String[]>> future : futuresCities) {//collect the lines of the cities
             Map<String, String[]> citiesOfChar = null;
             try {
                 citiesOfChar = future.get();
