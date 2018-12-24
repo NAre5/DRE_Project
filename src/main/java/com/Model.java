@@ -1,5 +1,7 @@
 package com;
 
+import javafx.util.Pair;
+
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
@@ -40,8 +42,8 @@ public class Model {
         searcher = new Searcher(postings_dir);
     }
 
-    public void searchByQuery(String query, boolean ifStem, boolean ifSemantic) {
-        List<String> ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
+    public Pair<String,List<String>> searchByQuery(String query, boolean ifStem, boolean ifSemantic) {
+        ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
 
 
     }

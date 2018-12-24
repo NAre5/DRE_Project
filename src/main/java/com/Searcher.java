@@ -1,5 +1,6 @@
 package com;
 
+import javafx.util.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -41,7 +42,7 @@ public class Searcher {
         documents = new HashMap<>(MapSaver.loadMap(postings_dir + "documents"));
     }
 
-    public List<String> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
+    public Pair<String,List<String>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
         dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "dic" + (ifStem ? "stem" : "nostem")));//Todo replace
         cQuery cquery = new cQuery(String.valueOf(Math.random() * 1000), query, cities);//Todo change ID
         cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
@@ -78,7 +79,7 @@ public class Searcher {
             if (i == 0)
                 break;
         }
-        return temp;
+        return new Pair<>(cquery.ID,temp);
     }
 
 
