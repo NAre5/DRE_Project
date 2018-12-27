@@ -1,6 +1,5 @@
 package com;
 
-import javafx.util.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -23,6 +22,8 @@ public class Searcher {
     private String postings_dir;
     private HashMap<String, String> documents = new HashMap<>();
     private HashMap<String, String> dictionary = new HashMap<>();
+    private long sumOfDocLenth = 0;
+    private int numOfdoc = 0;
 
     public Searcher(String postings_dir) {
         this.postings_dir = postings_dir;
@@ -39,11 +40,15 @@ public class Searcher {
         } finally {
             Close.close(br);
         }
-        documents = new HashMap<>(MapSaver.loadMap(postings_dir + "documents"));
+        documents = new HashMap<>(MapSaver.loadMap(postings_dir + "\\documents"));
+        for (Map.Entry<String, String> entry : documents.entrySet())
+            sumOfDocLenth += Long.parseLong(entry.getValue().split(";")[2]);
+        numOfdoc = documents.size();
+
     }
 
-    public Pair<String,List<String>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
-        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "dic" + (ifStem ? "stem" : "nostem")));//Todo replace
+    public Map<String, List<String>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
+        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\" + (ifStem ? "stem" : "nostem") + "\\dic"));//Todo replace
         cQuery cquery = new cQuery(String.valueOf(Math.random() * 1000), query, cities);//Todo change ID
         cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
 
@@ -51,14 +56,19 @@ public class Searcher {
             Set<String> termsCopy = new HashSet<>(cquery.terms.keySet());
             for (String s : termsCopy) {
                 if (termToCloseTerms.containsKey(s.toLowerCase())) {
-                    for (String s2 : termToCloseTerms.get(s)) {
-                        cquery.terms.put(s2, 1);
+                    for (String s2 : termToCloseTerms.get(s.toLowerCase())) {
+                        if (cquery.terms.containsKey(s2.toUpperCase()))
+                            cquery.terms.put(s2.toUpperCase(), cquery.terms.get(s2.toUpperCase()) + 1);
+                        else if (cquery.terms.containsKey(s2.toLowerCase()))
+                            cquery.terms.put(s2.toLowerCase(), cquery.terms.get(s2.toLowerCase()) + 1);
+                        else
+                            cquery.terms.put(s2.toLowerCase(), cquery.terms.get(s2.toLowerCase()) + 1);
                     }
                 }
             }
         }
 
-        Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary);
+        Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir + "\\" + (ifStem ? "stem" : "nostem"), ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
         // Create a list from elements of HashMap
         List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());
 
@@ -79,7 +89,9 @@ public class Searcher {
             if (i == 0)
                 break;
         }
-        return new Pair<>(cquery.ID,temp);
+        Map<String, List<String>> map = new TreeMap<>();
+        map.put(cquery.ID, temp);
+        return map;
     }
 
 
@@ -88,7 +100,9 @@ public class Searcher {
     }
 
     public Map<String, List<String>> search(Path path, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
-        Map<String, List<String>> relevantDocToQuery = new HashMap<>();
+//        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic" + (ifStem ? "stem" : "nostem")));//Todo replace
+        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));//Todo replace
+        Map<String, List<String>> relevantDocToQuery = new TreeMap<>();
         Document document = null;
         try {
             document = Jsoup.parse(new String(Files.readAllBytes(path)));
@@ -103,24 +117,30 @@ public class Searcher {
             String qdesc = qElement.getElementsByTag("desc").get(0).childNode(0).toString().trim().split(":")[1];
             String qnarr = qElement.getElementsByTag("narr").get(0).text();
 //            System.out.println();
-            cQuery cquery = new cQuery(qid, qtitle, cities);
+            cQuery cquery = new cQuery(qid, qtitle + " " + qdesc, cities);
             cquery.description = qdesc;
             cquery.narrative = qnarr;
 
-            cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
 
+            cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
             if (ifSemantic) {
                 Set<String> termsCopy = new HashSet<>(cquery.terms.keySet());
                 for (String s : termsCopy) {
                     if (termToCloseTerms.containsKey(s.toLowerCase())) {
-                        for (String s2 : termToCloseTerms.get(s)) {
-                            cquery.terms.put(s2, 1);
+                        for (String s2 : termToCloseTerms.get(s.toLowerCase())) {
+                            if (cquery.terms.containsKey(s2.toUpperCase()))
+                                cquery.terms.put(s2.toUpperCase(), cquery.terms.get(s2.toUpperCase()) + 1);
+                            else if (cquery.terms.containsKey(s2.toLowerCase()))
+                                cquery.terms.put(s2.toLowerCase(), cquery.terms.get(s2.toLowerCase()) + 1);
+                            else
+                                cquery.terms.put(s2.toLowerCase(), 1);
                         }
                     }
                 }
             }
 
-            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary);
+//            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir + "\\" + (ifStem ? "stem" : "nostem"), ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
+            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
             // Create a list from elements of HashMap
             List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());
 
@@ -134,7 +154,7 @@ public class Searcher {
             List<String> temp = new LinkedList<>();
             int i = 50;
             for (Map.Entry<String, Double> aa : list) {
-                if (aa.getValue() > 0) {
+                if (aa.getValue() > 0) {//todo maybe if we arrive to 0 we can finish the for because it sort
                     temp.add(aa.getKey());
                     i--;
                 }

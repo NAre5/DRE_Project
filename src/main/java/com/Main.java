@@ -13,9 +13,9 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(this.getClass().getResource("GUI.fxml"));
         primaryStage.setTitle("DRE Project");
-        primaryStage.setScene(new Scene(root, 600, 400));
+        primaryStage.setScene(new Scene(root, 600, 700));
         primaryStage.getIcons().add(new Image(this.getClass().getResourceAsStream("icon.png")));
-        primaryStage.setResizable(false);
+        primaryStage.setResizable(true);
         primaryStage.show();
 
     }
