@@ -40,13 +40,17 @@ public class Indexer {
      * @param ifStem        - if stemin. help to save the files with indecation to stem.
      */
     public Indexer(String diretory_name, boolean ifStem) {
-        d_path = diretory_name;
+        d_path = diretory_name + "\\" + (ifStem ? "stem" : "nostem");
         this.ifStem = ifStem;
-        File dir = new File(diretory_name);
         //create all files and connect them with mapper and initialize the fields.
+        File stemdir = new File(diretory_name, "stem");
+        stemdir.mkdirs();
+        File nostemdir = new File(diretory_name, "nostem");
+        nostemdir.mkdirs();
+        File dir = ifStem ? stemdir : nostemdir;
         File file;
         for (char c = 'a'; c <= 'z'; c++) {
-            file = new File(dir, c + "" + (ifStem ? "stem" : "nostem"));
+            file = new File(dir, String.valueOf(c));
             try {
                 file.createNewFile();
             } catch (IOException e) {
@@ -56,7 +60,7 @@ public class Indexer {
             mapper.put(String.valueOf(c), file);
             waitingRecords.put(String.valueOf(c), new StringBuilder());
         }
-        file = new File(dir, "_" + (ifStem ? "stem" : "nostem"));
+        file = new File(dir, "_");
         try {
             file.createNewFile();
         } catch (IOException e) {
@@ -151,7 +155,7 @@ public class Indexer {
         }
         mutexOnLists[27].lock();
         documentsList.append(docIDnumber).append("=").append(document.ID).append(";").append(document.max_tf).append(";").append(document.docLenth).append(";").append(document.terms.size())
-                .append(";").append(document.city).append(";").append(document.language).append(";").append(document.title).append(";").append(Arrays.toString(onlyBigWords)).append("\n");
+                .append(";").append(document.city).append(" ;").append(document.language).append(" ;").append(document.title).append(" ;").append(Arrays.toString(onlyBigWords)).append("\n");
         mutexOnLists[27].unlock();
         document = null;
 //        docAndexed.getAndAdd(1);
@@ -235,9 +239,9 @@ public class Indexer {
             while ((st = bf.readLine()) != null) {
 //                StringBuilder docData = new StringBuilder(st.substring(0,st.lastIndexOf("[")+1));
                 StringBuilder docData = new StringBuilder(st);
-                int index = docData.lastIndexOf("[")+1;
+                int index = docData.lastIndexOf("[") + 1;
                 String[] line = docData.substring(index, docData.lastIndexOf("]")).split(", ");
-                docData.setLength(index+1);
+                docData.setLength(index + 1);
                 int counter = 5;
                 for (int i = 0; i < line.length && counter > 0; i++) {
                     if (dictionary.containsKey(line[i])) {
@@ -274,6 +278,7 @@ public class Indexer {
         StringBuilder citiesText = new StringBuilder();
         for (Map.Entry<String, StringBuilder> sb : cities.entrySet())
             citiesText.append(sb.getKey() + "~").append(sb.getValue()).append("\n");
+        citiesText.setLength(citiesText.length() - 1);
         Thread thread = new Thread(new WriterThread(mutexOnFiles[28], mutexOnLists[28], mapper.get("cities"), citiesText));
         thread.start();
         try {
@@ -309,9 +314,9 @@ public class Indexer {
         //save maps
 //        System.out.println(dictionary.size() + "-" + dictionaryTF.size());
         hash = new LinkedHashSet<>(dictionary.keySet());
-        MapSaver.saveMap(new TreeMap<String, Object>(dictionary), d_path + "\\dic" + (ifStem ? "stem" : "nostem"));
+        MapSaver.saveMap(new TreeMap<String, Object>(dictionary), d_path + "\\dic");
         dictionary.clear();
-        MapSaver.saveMap(new TreeMap<String, Object>(dictionaryTF), d_path + "\\dicTF" + (ifStem ? "stem" : "nostem"));
+        MapSaver.saveMap(new TreeMap<String, Object>(dictionaryTF), d_path + "\\dicTF");
         dictionaryTF.clear();
         char start = 'a';
         char end = 'z';
@@ -322,6 +327,7 @@ public class Indexer {
         sortFile(mapper.get(String.valueOf("_")));
 
     }
+
     private void sortFile(File file) {
         TreeMap<String, StringBuilder> words = new TreeMap<>();
         BufferedReader br = null;
@@ -355,7 +361,6 @@ public class Indexer {
             e.printStackTrace();
         }
     }
-
 
 
 //    static byte[] intToBytes(int number, int num_of_bytes) {

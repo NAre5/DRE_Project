@@ -12,6 +12,7 @@ import javafx.util.Pair;
 import org.controlsfx.control.CheckComboBox;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class Controller {
@@ -20,6 +21,7 @@ public class Controller {
     public TextField text_postings_in;
     public TextField text_queries_path;
     public Button fileChooser_queries_file;
+    public Button button_search_queries_file;
     public CheckComboBox comboBox_cities;
     Model model = new Model();
     @FXML
@@ -32,7 +34,10 @@ public class Controller {
     public TextField text_stop_words;
     public TextField text_postings_out;
     public TextField text_corpus;
+    public TextField text_query;
     public CheckBox checkBox_stemming_IN;
+    public CheckBox checkBox_stemming_Q;
+    public CheckBox checkBox_semantic;
     public GridPane data;
     public ComboBox<String> comboBox_languages;
 
@@ -46,6 +51,8 @@ public class Controller {
         button_loadDictionary.setDisable(true);
         button_showDictionary.setDisable(true);
         comboBox_languages.setDisable(true);
+        text_queries_path.setText("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\queries.txt");
+        button_search_queries_file.setDisable(false);
     }
 
     /**
@@ -111,7 +118,6 @@ public class Controller {
                 showAlert(Alert.AlertType.ERROR, "postings text: illegal path");
                 return;
             }
-
             lastPath = text_postings_out.getText();//save the last path of the last time we save the dictionary
             long startTime = System.nanoTime();//start to calculate how much the the process takes
             model.startIndexing(text_corpus.getText(), text_stop_words.getText(), text_postings_out.getText(), checkBox_stemming_IN.isSelected());
@@ -129,7 +135,7 @@ public class Controller {
             StringBuilder showText = new StringBuilder();
             showText.append("The numbers of documents indexed: ").append(numberOfindexDoc).append("\n")
                     .append("The number of unique terms: ").append(uniqueTerm).append("\n").append("The time is takes: ").append(CreateIndexTime).append(" sec");
-            model.initSearch(lastPath);
+            model.initSearch(lastPath+"\\"+(checkBox_stemming_IN.isSelected()?"stem":"nostem"));
             comboBox_cities.getItems().clear();
 //            comboBox_cities.getItems().
 
@@ -216,19 +222,18 @@ public class Controller {
     }
 
     public void choose_postings_file_and_load(ActionEvent actionEvent) {
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
-        if (file == null)
-            return;
-        text_postings_in.setText(file.getPath());
+//        DirectoryChooser directoryChooser = new DirectoryChooser();
+//        File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
+//        if (file == null)
+//            return;
+        text_postings_in.setText("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\ppart3\\nostem");
         //Todo open "wait..." window with text: "loading..."
-
-        lastPath = file.getPath();
+        lastPath = text_postings_in.getText();
+        model.initSearch(text_postings_in.getText());
     }
 
     public void search_query(ActionEvent actionEvent) {
-
-
+        model.searchByQuery(text_query.getText(),checkBox_stemming_Q.isSelected(),checkBox_semantic.isSelected());
     }
 
     public void open_fileChooser_queries_file(ActionEvent actionEvent) {
@@ -237,9 +242,11 @@ public class Controller {
         if (file == null)
             return;
         text_queries_path.setText(file.getPath());
+        button_search_queries_file.setDisable(false);
     }
 
     public void search_queries_file(ActionEvent actionEvent) {
+        model.searchByQuery_File(Paths.get(text_queries_path.getText()),checkBox_stemming_Q.isSelected(),checkBox_semantic.isSelected());
 
     }
 }

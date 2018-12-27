@@ -37,10 +37,10 @@ String title;
                 String key = entry.getKey();
                 Integer value = entry.getValue();
                 String term_s = stemmer.stemTerm(key);
-                if (!terms.containsKey(term_s))
+                if (!newTerms.containsKey(term_s))
                     newTerms.put(term_s, value);
                 else
-                    newTerms.put(term_s, newTerms.get(key) + value);
+                    newTerms.put(term_s, newTerms.get(term_s) + value);
             }
         } catch (Exception e) {
             e.printStackTrace();

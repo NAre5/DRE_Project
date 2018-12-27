@@ -6,15 +6,18 @@ import java.util.concurrent.*;
 
 public class Ranker {
 
-    public static Map<String, Double> rank(cQuery query, String d_path, boolean ifStem, HashMap<String, String> documents, HashMap<String, String> dictionary) {
+    public static Map<String, Double> rank(cQuery query, String d_path, boolean ifStem, HashMap<String, String> documents, HashMap<String, String> dictionary, int numOfdoc, long sumOfDocLenth) {
         ExecutorService reader_pool = Executors.newCachedThreadPool();//Todo change to limit (8) threads?
         HashMap<String, Double> documentsRank = new HashMap<>();
         HashMap<String, String[]> termToDocTf = new HashMap<>();
         HashMap<Character, HashSet<String>> querytermOfChar = new HashMap<>();
-        for (String queryTerm : query.terms.keySet()) {//divide the term in the query to set of each char to make the search in one time
+        for (String queryTerm : query.terms.keySet()) {
+            if (queryTerm.equals(""))
+                continue;//divide the term in the query to set of each char to make the search in one time
             Character firstChar = (Character.isLetter(queryTerm.charAt(0)) ? queryTerm.charAt(0) : '_');
             HashSet<String> setOfTerms = querytermOfChar.getOrDefault(firstChar, new LinkedHashSet<>());
-            setOfTerms.add(queryTerm);
+            setOfTerms.add(queryTerm.toLowerCase());
+            setOfTerms.add(queryTerm.toUpperCase());
             querytermOfChar.put(firstChar, setOfTerms);
         }
         List<Future<Map<String, String[]>>> futuresTerms = new LinkedList<>();
@@ -71,10 +74,11 @@ public class Ranker {
                 e.printStackTrace();
             }
         }
-        double avdl = (double) cDocument.sumOfDoclenth.get() / cDocument.numOfDoc.get();
-        double logMplus1 = Math.log((cDocument.numOfDoc.get() + 1));
-        final double b = 0.75;
-        final double k = 1.5;
+        reader_pool.shutdown();
+        double avdl = (double) sumOfDocLenth / numOfdoc;
+        double logMplus1 = Math.log(numOfdoc + 1);
+        final double b = 0.5;
+        final double k = 1.4;
         final double TITLE = 5;
         for (String queryTerm : query.terms.keySet()) {
             if (!dictionary.containsKey(queryTerm))//TODO check if we need case sensitive
@@ -83,16 +87,20 @@ public class Ranker {
             for (int i = 1; i < docTF.length; i++) {
                 String docID = docTF[i].split(";")[0];
                 String[] dataOfDoc = documents.get(docID).split(";");
-                if (!(query.cities.contains(dataOfDoc[4]) || documentsWithCities.contains(docID)))
+                if (!(query.cities.isEmpty() || (query.cities.contains(dataOfDoc[4]) || documentsWithCities.contains(docID))))
                     continue;
-                String docTitle = dataOfDoc[6];
+                String docTitle = "";//TODo after new indexing not need try and catch
+                docTitle = dataOfDoc[6];
                 int tf = Integer.parseInt(docTF[i].split(";")[1]);
-                String docName = dataOfDoc[0].split("=")[1];
+                String docName = dataOfDoc[0];
                 int docLenth = Integer.parseInt(dataOfDoc[2]);
-                double numerator = query.terms.get(queryTerm) * ((docTitle.contains(queryTerm.toLowerCase()) || docTitle.contains(queryTerm.toLowerCase().toUpperCase())) ? TITLE : 1) * (k + 1) * tf * (logMplus1 - Math.log(Integer.parseInt(dictionary.get(queryTerm))));
+//                if (docTitle.contains(queryTerm.toUpperCase()))
+//                    System.out.println();
+                double numerator = query.terms.get(queryTerm) * ((docTitle.contains(queryTerm.toUpperCase()) || docTitle.contains(queryTerm.toLowerCase().toUpperCase())) ? TITLE : 1) * (k + 1) * tf * (logMplus1 - Math.log(Integer.parseInt(dictionary.get(queryTerm))));
                 double denominator = tf + k * (1 - b + b * (docLenth / avdl));
                 double bm25TodocAndTerm = numerator / denominator;
                 documentsRank.put(docName, documentsRank.getOrDefault(docName, 0.0) + bm25TodocAndTerm);
+
             }
         }
         return documentsRank;
@@ -100,7 +108,7 @@ public class Ranker {
 
     public static Map<String, String[]> getLinesFromPosting(HashSet<String> terms, char firstchar, String path, boolean ifStem) {
         Map<String, String[]> linesOfterms = new HashMap<>();
-        File file = new File(path + "\\" + firstchar + (ifStem ? "stem" : "nostem"));
+        File file = new File(path + "\\" + firstchar);
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(new FileReader(file));
@@ -126,7 +134,7 @@ public class Ranker {
         return linesOfterms;
     }
 
-    public static String[] getDocumentEnteties(String docName){
+    public static String[] getDocumentEnteties(String docName) {
 
         return null;
     }
@@ -148,16 +156,17 @@ class ReadThread implements Callable<Map<String, String[]>> {
     @Override
     public Map<String, String[]> call() {
         Map<String, String[]> linesOfterms = new HashMap<>();
-        File file = new File(path + "\\" + firstchar + (ifStem ? "stem" : "nostem"));
+        File file = new File(path + "\\" + firstchar);
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(new FileReader(file));
             String st;
-            while ((st = bufferedReader.readLine()) != null) {
+            while ((st = bufferedReader.readLine()) != null && !terms.isEmpty()) {
                 String term = st.substring(0, st.indexOf("~"));
                 if (terms.contains(term)) {
                     linesOfterms.put(term, st.split("\\|"));
-                    terms.remove(term);
+                    terms.remove(term.toLowerCase());
+                    terms.remove(term.toUpperCase());
                 }
             }
         } catch (IOException e) {
