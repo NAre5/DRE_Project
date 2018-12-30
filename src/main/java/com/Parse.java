@@ -404,8 +404,8 @@ public class Parse {
             }
 
             //do stemming if need
-            if (isDoc && ifStem)
-                ((cDocument) item).stem_dictionary(new Stemmer());
+            if (ifStem)
+                item.stem_dictionary(new Stemmer());
             return item;
         }
 

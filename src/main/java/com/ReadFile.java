@@ -107,10 +107,7 @@ public class ReadFile {
             for (Element element : docElements) {
                 Elements IDElement = element.getElementsByTag("DOCNO");
                 Elements TitleElement = element.getElementsByTag("TI");
-                if(TitleElement.size()==0)
-                {
-                    TitleElement = element.getElementsByTag("HEADLINE");
-                }
+
                 Elements TextElement = element.getElementsByTag("TEXT");
                 Elements fElements = element.getElementsByTag("F");
                 String city = "";

@@ -1,15 +1,13 @@
 package com;
 
+import javafx.util.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import org.jsoup.nodes.Element;
 import org.jsoup.select.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,7 +45,7 @@ public class Searcher {
 
     }
 
-    public Map<String, List<String>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
+    public Map<String, List<Pair<String,String[]>>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
         dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\" + (ifStem ? "stem" : "nostem") + "\\dic"));//Todo replace
         cQuery cquery = new cQuery(String.valueOf(Math.random() * 1000), query, cities);//Todo change ID
         cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
@@ -79,25 +77,27 @@ public class Searcher {
                 return (o2.getValue()).compareTo(o1.getValue());
             }
         });
-        List<String> temp = new LinkedList<>();
+        List<Pair<String,String[]>> temp = new LinkedList<>();
         int i = 50;
         for (Map.Entry<String, Double> aa : list) {
             if (aa.getValue() > 0) {
-                temp.add(aa.getKey());
+                temp.add(new Pair<>(documents.get(aa.getKey()).split(";")[0],getDocumentEntities(aa.getKey())));
                 i--;
             }
+            else
+                break;
             if (i == 0)
                 break;
         }
-        Map<String, List<String>> map = new TreeMap<>();
+        Map<String, List<Pair<String,String[]>>> map = new TreeMap<>();
         map.put(cquery.ID, temp);
         return map;
     }
 
-    public Map<String, List<String>> search(Path path, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
+    public Map<String, List<Pair<String,String[]>>> search(Path path, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
 //        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic" + (ifStem ? "stem" : "nostem")));//Todo replace
         dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));//Todo replace
-        Map<String, List<String>> relevantDocToQuery = new TreeMap<>();
+        Map<String, List<Pair<String,String[]>>> relevantDocToQuery = new TreeMap<>();
         Document document = null;
         try {
             document = Jsoup.parse(new String(Files.readAllBytes(path)));
@@ -105,6 +105,7 @@ public class Searcher {
             e.printStackTrace();
         }
 //        System.out.println(document);
+        StringBuilder sb =new StringBuilder();
         Elements queries = document.getElementsByTag("top");
         for (Element qElement : queries) {
             String qid = qElement.getElementsByTag("num").get(0).childNode(0).toString().trim().split(":")[1];
@@ -133,7 +134,6 @@ public class Searcher {
                     }
                 }
             }
-
 //            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir + "\\" + (ifStem ? "stem" : "nostem"), ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
             Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
             // Create a list from elements of HashMap
@@ -146,13 +146,15 @@ public class Searcher {
                     return (o2.getValue()).compareTo(o1.getValue());
                 }
             });
-            List<String> temp = new LinkedList<>();
+            List<Pair<String,String[]>> temp = new LinkedList<>();
             int i = 50;
             for (Map.Entry<String, Double> aa : list) {
                 if (aa.getValue() > 0) {//todo maybe if we arrive to 0 we can finish the for because it sort
-                    temp.add(aa.getKey());
+                    temp.add(new Pair<>(documents.get(aa.getKey()).split(";")[0],getDocumentEntities(aa.getKey())));
                     i--;
                 }
+                else
+                    break;
                 if (i == 0)
                     break;
             }

@@ -30,21 +30,5 @@ String title;
      * to do stemming to all of the term
      * @param stemmer - the algorithm to stemming
      */
-    void stem_dictionary(Stemmer stemmer) {
-        HashMap<String, Integer> newTerms = new HashMap<>();
-        try {
-            for (Map.Entry<String, Integer> entry : terms.entrySet()) {
-                String key = entry.getKey();
-                Integer value = entry.getValue();
-                String term_s = stemmer.stemTerm(key);
-                if (!newTerms.containsKey(term_s))
-                    newTerms.put(term_s, value);
-                else
-                    newTerms.put(term_s, newTerms.get(term_s) + value);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        terms = newTerms;
-    }
+
 }

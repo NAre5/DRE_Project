@@ -228,7 +228,7 @@ public class Controller {
 //        File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
 //        if (file == null)
 //            return;
-        text_postings_in.setText("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\ppart3\\nostem");
+        text_postings_in.setText("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\plast\\stem");
         //Todo open "wait..." window with text: "loading..."
         lastPath = text_postings_in.getText();
         model.initSearch(text_postings_in.getText());

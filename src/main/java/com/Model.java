@@ -48,7 +48,7 @@ public class Model {
 
     private void saveQuertyOutput(Map<String, List<String>> ans) {
         System.out.println("Saving query");
-        File file = new File("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\query1.txt");
+        File file = new File("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\query5.txt");
         try {
             file.createNewFile();
         } catch (IOException e) {

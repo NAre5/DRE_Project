@@ -91,6 +91,8 @@ public class Ranker {
                     continue;
                 String docTitle = "";//TODo after new indexing not need try and catch
                 docTitle = dataOfDoc[6];
+                if (docTitle.equals(" "))
+                    docTitle = "";
                 int tf = Integer.parseInt(docTF[i].split(";")[1]);
                 String docName = dataOfDoc[0];
                 int docLenth = Integer.parseInt(dataOfDoc[2]);
@@ -99,7 +101,7 @@ public class Ranker {
                 double numerator = query.terms.get(queryTerm) * ((docTitle.contains(queryTerm.toUpperCase()) || docTitle.contains(queryTerm.toLowerCase().toUpperCase())) ? TITLE : 1) * (k + 1) * tf * (logMplus1 - Math.log(Integer.parseInt(dictionary.get(queryTerm))));
                 double denominator = tf + k * (1 - b + b * (docLenth / avdl));
                 double bm25TodocAndTerm = numerator / denominator;
-                documentsRank.put(docName, documentsRank.getOrDefault(docName, 0.0) + bm25TodocAndTerm);
+                documentsRank.put(docID, documentsRank.getOrDefault(docName, 0.0) + bm25TodocAndTerm);
 
             }
         }
