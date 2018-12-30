@@ -2,12 +2,16 @@ package com;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.stage.*;
 import javafx.util.Callback;
 import javafx.util.Pair;
@@ -26,7 +30,6 @@ public class Controller {
     public Button button_search_queries_file;
     public CheckComboBox comboBox_cities;
     Model model = new Model();
-    @FXML
     public Button fileChooser_stop_words;
     public Button fileChooser_postings_out;
     public Button fileChooser_corpus;
@@ -53,7 +56,7 @@ public class Controller {
         button_loadDictionary.setDisable(true);
         button_showDictionary.setDisable(true);
         comboBox_languages.setDisable(true);
-        text_queries_path.setText("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\queries.txt");
+        text_queries_path.setText("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\queries.txt");
         button_search_queries_file.setDisable(false);
     }
 
@@ -137,7 +140,7 @@ public class Controller {
             StringBuilder showText = new StringBuilder();
             showText.append("The numbers of documents indexed: ").append(numberOfindexDoc).append("\n")
                     .append("The number of unique terms: ").append(uniqueTerm).append("\n").append("The time is takes: ").append(CreateIndexTime).append(" sec");
-            model.initSearch(lastPath+"\\"+(checkBox_stemming_IN.isSelected()?"stem":"nostem"));
+            model.initSearch(lastPath + "\\" + (checkBox_stemming_IN.isSelected() ? "stem" : "nostem"));
             comboBox_cities.getItems().clear();
 //            comboBox_cities.getItems().
 
@@ -235,7 +238,8 @@ public class Controller {
     }
 
     public void search_query(ActionEvent actionEvent) {
-        model.searchByQuery(text_query.getText(),checkBox_stemming_Q.isSelected(),checkBox_semantic.isSelected());
+        model.searchByQuery(text_query.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected());
+
     }
 
     public void open_fileChooser_queries_file(ActionEvent actionEvent) {
@@ -247,17 +251,16 @@ public class Controller {
         button_search_queries_file.setDisable(false);
     }
 
-    private TableView<Pair<String, String[]>> getQueryTable()
-    {
+    private TableView<Pair<String, String[]>> getQueryTable() {
         TableView<Pair<String, String[]>> queryTable = new TableView<>();
         queryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        TableColumn<Pair<String, String[]>,String> docColumn = new TableColumn<>("document");
+        TableColumn<Pair<String, String[]>, String> docColumn = new TableColumn<>("document");
         docColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getKey()));
 
         TableColumn<Pair<String, String[]>, String> seeMore_buttons = new TableColumn<>();//Button
 
-        seeMore_buttons.setCellFactory(param -> new TableCell<Pair<String, String[]>,String>() {
+        seeMore_buttons.setCellFactory(param -> new TableCell<Pair<String, String[]>, String>() {
 
             final Button btn = new Button("see entities");
 
@@ -277,7 +280,7 @@ public class Controller {
                         stage.initModality(Modality.APPLICATION_MODAL);
                         ScrollPane scrollPane = new ScrollPane();
                         TableView<String> queryTable = new TableView<>();
-                        TableColumn<String,String> entities = new TableColumn<>("entity");
+                        TableColumn<String, String> entities = new TableColumn<>("entity");
                         entities.setCellValueFactory(param1 -> new SimpleStringProperty(param1.getValue()));
                         queryTable.getColumns().add(entities);
                         queryTable.getItems().addAll(doc.getValue());
@@ -296,7 +299,7 @@ public class Controller {
             }
         });
 
-        queryTable.getColumns().addAll(docColumn,seeMore_buttons);
+        queryTable.getColumns().addAll(docColumn, seeMore_buttons);
         return queryTable;
     }
 
@@ -305,7 +308,7 @@ public class Controller {
 
         TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        TableColumn<Map.Entry<String, List<Pair<String, String[]>>>,String> queryNum = new TableColumn<>("query num");
+        TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> queryNum = new TableColumn<>("query num");
         queryNum.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getKey()));
 
         TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> seeMore_buttons = new TableColumn<>();//Button
@@ -347,11 +350,24 @@ public class Controller {
             }
         });
 
-        tableView.getColumns().addAll(queryNum,seeMore_buttons);
+        tableView.getColumns().addAll(queryNum, seeMore_buttons);
         tableView.getItems().addAll(results.entrySet());
         Stage stage = new Stage();
-        stage.setScene(new Scene(tableView));
-        stage.setResizable(false);
+        stage.setResizable(true);
+        VBox vBox = new VBox();
+        Button button = new Button("save queries results");
+        button.setOnAction(event -> {
+            FileChooser fileChooser = new FileChooser();
+            File file = fileChooser.showOpenDialog(button.getScene().getWindow());
+            if (file == null)
+                return;
+            model.saveQueryOutput(results,file);
+        });
+        button.setPrefWidth(vBox.getMaxWidth());
+        button.setMaxWidth(vBox.getMaxWidth());
+//        button.setMaxWidth(vBox.widthProperty().doubleValue());
+        vBox.getChildren().addAll(button, tableView);
+        stage.setScene(new Scene(vBox));
         stage.setTitle(results.size() + " query's results");
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.show();

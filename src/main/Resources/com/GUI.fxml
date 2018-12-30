@@ -13,6 +13,7 @@
 <?import javafx.scene.text.Text?>
 
 <?import org.controlsfx.control.CheckComboBox?>
+
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.Controller">
     <children>
         <GridPane layoutX="5.0" layoutY="115.0" prefHeight="85.0" prefWidth="592.0">

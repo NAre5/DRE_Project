@@ -45,12 +45,12 @@ public class Model {
 
     public void searchByQuery(String query, boolean ifStem, boolean ifSemantic) {
         Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
-        saveQuertyOutput(ans);
+//        saveQueryOutput(ans);
     }
 
-    private void saveQuertyOutput(Map<String, List<Pair<String, String[]>>> ans) {
+    public void saveQueryOutput(Map<String, List<Pair<String, String[]>>> ans, File file) {
         System.out.println("Saving query");
-        File file = new File("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\query5.txt");
+//        File file = new File("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\query5.txt");
         try {
             file.createNewFile();
         } catch (IOException e) {
@@ -89,7 +89,7 @@ public class Model {
 
     public Map<String, List<Pair<String, String[]>>> searchByQuery_File(Path query, boolean ifStem, boolean ifSemantic) {
         Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
-        saveQuertyOutput(ans);
+//        saveQueryOutput(ans);
         return ans;
     }
 
