@@ -48,7 +48,7 @@ public class Model {
 
     private void saveQuertyOutput(Map<String, List<String>> ans) {
         System.out.println("Saving query");
-        File file = new File("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\query1.txt");
+        File file = new File("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\query1.txt");
         try {
             file.createNewFile();
         } catch (IOException e) {
@@ -68,6 +68,7 @@ public class Model {
 
                 }
             }
+            br.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -84,10 +85,13 @@ public class Model {
 
     }
 
-    public void searchByQuery_File(Path query, boolean ifStem, boolean ifSemantic) {
+    public Map<String, List<String>> searchByQuery_File(Path query, boolean ifStem, boolean ifSemantic) {
         Map<String, List<String>> ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
         saveQuertyOutput(ans);
+        return ans;
     }
 
-
+    public String[] getDocumentEntities(String doc) {
+        return searcher.getDocumentEntities(doc);
+    }
 }

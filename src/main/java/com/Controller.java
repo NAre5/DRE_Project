@@ -1,5 +1,6 @@
 package com;
 
+import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -8,6 +9,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.stage.*;
+import javafx.util.Callback;
 import javafx.util.Pair;
 import org.controlsfx.control.CheckComboBox;
 
@@ -226,7 +228,7 @@ public class Controller {
 //        File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
 //        if (file == null)
 //            return;
-        text_postings_in.setText("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\ppart3\\nostem");
+        text_postings_in.setText("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\ppart3\\nostem");
         //Todo open "wait..." window with text: "loading..."
         lastPath = text_postings_in.getText();
         model.initSearch(text_postings_in.getText());
@@ -245,8 +247,109 @@ public class Controller {
         button_search_queries_file.setDisable(false);
     }
 
-    public void search_queries_file(ActionEvent actionEvent) {
-        model.searchByQuery_File(Paths.get(text_queries_path.getText()),checkBox_stemming_Q.isSelected(),checkBox_semantic.isSelected());
+    private TableView<String> getQueryTable()
+    {
+        TableView<String> queryTable = new TableView<>();
+        queryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
+        TableColumn<String,String> docColumn = new TableColumn<>("document");
+        docColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()));
+
+        TableColumn<String, String> seeMore_buttons = new TableColumn<>();//Button
+
+        seeMore_buttons.setCellFactory(param -> new TableCell<String,String>() {
+
+            final Button btn = new Button("see entities");
+
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    btn.setOnAction(event -> {
+                        String doc = getTableView().getItems().get(getIndex());
+                        Stage stage = new Stage();
+                        stage.setAlwaysOnTop(false);
+                        stage.setResizable(false);
+                        stage.setTitle("document " + doc + " entities");
+                        stage.initModality(Modality.APPLICATION_MODAL);
+                        ScrollPane scrollPane = new ScrollPane();
+                        TableView<String> queryTable = getQueryTable();
+                        queryTable.getItems().addAll(model.getDocumentEntities(doc));
+                        queryTable.setPrefWidth(2500);
+                        scrollPane.setContent(queryTable);
+                        queryTable.setPrefHeight(600);
+                        scrollPane.setPrefHeight(600);
+                        scrollPane.setPrefWidth(800);
+                        Scene scene = new Scene(scrollPane);
+                        stage.setScene(scene);
+                        stage.show();
+                    });
+                    setGraphic(btn);
+                    setText(null);
+                }
+            }
+        });
+
+        queryTable.getColumns().addAll(docColumn,seeMore_buttons);
+        return queryTable;
+    }
+
+    public void search_queries_file(ActionEvent actionEvent) {
+        Map<String, List<String>> results = model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected());
+
+        TableView<Map.Entry<String,List<String>>> tableView = new TableView<>();
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        TableColumn<Map.Entry<String,List<String>>,String> queryNum = new TableColumn<>("query num");
+        queryNum.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getKey()));
+
+        TableColumn<Map.Entry<String,List<String>>, String> seeMore_buttons = new TableColumn<>();//Button
+
+        seeMore_buttons.setCellFactory(param -> new TableCell<Map.Entry<String, List<String>>, String>() {
+
+            final Button btn = new Button("see more");
+
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    btn.setOnAction(event -> {
+                        Map.Entry<String, List<String>> query = getTableView().getItems().get(getIndex());
+                        Stage stage = new Stage();
+                        stage.setAlwaysOnTop(false);
+                        stage.setResizable(false);
+                        stage.setTitle("query " + query.getKey());
+                        stage.initModality(Modality.APPLICATION_MODAL);
+                        ScrollPane scrollPane = new ScrollPane();
+                        TableView<String> queryTable = getQueryTable();
+                        queryTable.getItems().addAll(query.getValue());
+                        queryTable.setPrefWidth(2500);
+                        scrollPane.setContent(queryTable);
+                        queryTable.setPrefHeight(600);
+                        scrollPane.setPrefHeight(600);
+                        scrollPane.setPrefWidth(800);
+                        Scene scene = new Scene(scrollPane);
+                        stage.setScene(scene);
+                        stage.show();
+                    });
+                    setGraphic(btn);
+                    setText(null);
+                }
+            }
+        });
+
+        tableView.getColumns().addAll(queryNum,seeMore_buttons);
+        tableView.getItems().addAll(results.entrySet());
+        Stage stage = new Stage();
+        stage.setScene(new Scene(tableView));
+        stage.setResizable(false);
+        stage.setTitle(results.size() + " query's results");
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.show();
     }
 }

@@ -94,11 +94,6 @@ public class Searcher {
         return map;
     }
 
-
-    public static void main(String[] args) {
-//        search(Paths.get("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\queries.txt"), false, false);
-    }
-
     public Map<String, List<String>> search(Path path, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
 //        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic" + (ifStem ? "stem" : "nostem")));//Todo replace
         dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));//Todo replace
@@ -164,5 +159,10 @@ public class Searcher {
             relevantDocToQuery.put(qid, new LinkedList<>(temp));
         }
         return relevantDocToQuery;
+    }
+
+    public String[] getDocumentEntities(String doc) {
+        String entry = documents.get(doc);
+        return entry.substring(entry.lastIndexOf(";")+1).split("[, ]");
     }
 }
