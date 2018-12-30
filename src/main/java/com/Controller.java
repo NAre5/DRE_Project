@@ -228,7 +228,7 @@ public class Controller {
 //        File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
 //        if (file == null)
 //            return;
-        text_postings_in.setText("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\plast\\stem");
+        text_postings_in.setText("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\ppart3\\nostem");
         //Todo open "wait..." window with text: "loading..."
         lastPath = text_postings_in.getText();
         model.initSearch(text_postings_in.getText());
@@ -247,17 +247,17 @@ public class Controller {
         button_search_queries_file.setDisable(false);
     }
 
-    private TableView<String> getQueryTable()
+    private TableView<Pair<String, String[]>> getQueryTable()
     {
-        TableView<String> queryTable = new TableView<>();
+        TableView<Pair<String, String[]>> queryTable = new TableView<>();
         queryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        TableColumn<String,String> docColumn = new TableColumn<>("document");
-        docColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()));
+        TableColumn<Pair<String, String[]>,String> docColumn = new TableColumn<>("document");
+        docColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getKey()));
 
-        TableColumn<String, String> seeMore_buttons = new TableColumn<>();//Button
+        TableColumn<Pair<String, String[]>, String> seeMore_buttons = new TableColumn<>();//Button
 
-        seeMore_buttons.setCellFactory(param -> new TableCell<String,String>() {
+        seeMore_buttons.setCellFactory(param -> new TableCell<Pair<String, String[]>,String>() {
 
             final Button btn = new Button("see entities");
 
@@ -269,20 +269,23 @@ public class Controller {
                     setText(null);
                 } else {
                     btn.setOnAction(event -> {
-                        String doc = getTableView().getItems().get(getIndex());
+                        Pair<String, String[]> doc = getTableView().getItems().get(getIndex());
                         Stage stage = new Stage();
                         stage.setAlwaysOnTop(false);
                         stage.setResizable(false);
                         stage.setTitle("document " + doc + " entities");
                         stage.initModality(Modality.APPLICATION_MODAL);
                         ScrollPane scrollPane = new ScrollPane();
-                        TableView<String> queryTable = getQueryTable();
-                        queryTable.getItems().addAll(model.getDocumentEntities(doc));
-                        queryTable.setPrefWidth(2500);
+                        TableView<String> queryTable = new TableView<>();
+                        TableColumn<String,String> entities = new TableColumn<>("entity");
+                        entities.setCellValueFactory(param1 -> new SimpleStringProperty(param1.getValue()));
+                        queryTable.getColumns().add(entities);
+                        queryTable.getItems().addAll(doc.getValue());
+//                        queryTable.setPrefWidth(2500);
                         scrollPane.setContent(queryTable);
-                        queryTable.setPrefHeight(600);
-                        scrollPane.setPrefHeight(600);
-                        scrollPane.setPrefWidth(800);
+//                        queryTable.setPrefHeight(600);
+//                        scrollPane.setPrefHeight(600);
+//                        scrollPane.setPrefWidth(800);
                         Scene scene = new Scene(scrollPane);
                         stage.setScene(scene);
                         stage.show();
@@ -298,16 +301,16 @@ public class Controller {
     }
 
     public void search_queries_file(ActionEvent actionEvent) {
-        Map<String, List<String>> results = model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected());
+        Map<String, List<Pair<String, String[]>>> results = model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected());
 
-        TableView<Map.Entry<String,List<String>>> tableView = new TableView<>();
+        TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        TableColumn<Map.Entry<String,List<String>>,String> queryNum = new TableColumn<>("query num");
+        TableColumn<Map.Entry<String, List<Pair<String, String[]>>>,String> queryNum = new TableColumn<>("query num");
         queryNum.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getKey()));
 
-        TableColumn<Map.Entry<String,List<String>>, String> seeMore_buttons = new TableColumn<>();//Button
+        TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> seeMore_buttons = new TableColumn<>();//Button
 
-        seeMore_buttons.setCellFactory(param -> new TableCell<Map.Entry<String, List<String>>, String>() {
+        seeMore_buttons.setCellFactory(param -> new TableCell<Map.Entry<String, List<Pair<String, String[]>>>, String>() {
 
             final Button btn = new Button("see more");
 
@@ -319,20 +322,21 @@ public class Controller {
                     setText(null);
                 } else {
                     btn.setOnAction(event -> {
-                        Map.Entry<String, List<String>> query = getTableView().getItems().get(getIndex());
+                        Map.Entry<String, List<Pair<String, String[]>>> query = getTableView().getItems().get(getIndex());
                         Stage stage = new Stage();
                         stage.setAlwaysOnTop(false);
                         stage.setResizable(false);
                         stage.setTitle("query " + query.getKey());
                         stage.initModality(Modality.APPLICATION_MODAL);
                         ScrollPane scrollPane = new ScrollPane();
-                        TableView<String> queryTable = getQueryTable();
+                        TableView<Pair<String, String[]>> queryTable = getQueryTable();
                         queryTable.getItems().addAll(query.getValue());
-                        queryTable.setPrefWidth(2500);
+
+//                        queryTable.setPrefWidth(2500);
                         scrollPane.setContent(queryTable);
-                        queryTable.setPrefHeight(600);
-                        scrollPane.setPrefHeight(600);
-                        scrollPane.setPrefWidth(800);
+//                        queryTable.setPrefHeight(600);
+//                        scrollPane.setPrefHeight(600);
+//                        scrollPane.setPrefWidth(800);
                         Scene scene = new Scene(scrollPane);
                         stage.setScene(scene);
                         stage.show();

@@ -1,5 +1,7 @@
 package com;
 
+import javafx.util.Pair;
+
 import java.io.*;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -42,11 +44,11 @@ public class Model {
     }
 
     public void searchByQuery(String query, boolean ifStem, boolean ifSemantic) {
-        Map<String, List<String>> ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
+        Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
         saveQuertyOutput(ans);
     }
 
-    private void saveQuertyOutput(Map<String, List<String>> ans) {
+    private void saveQuertyOutput(Map<String, List<Pair<String, String[]>>> ans) {
         System.out.println("Saving query");
         File file = new File("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\query5.txt");
         try {
@@ -57,11 +59,11 @@ public class Model {
         BufferedWriter br = null;
         try {
             br = new BufferedWriter(new FileWriter(file, true));
-            for (Map.Entry<String, List<String>> entry : ans.entrySet()) {
+            for (Map.Entry<String, List<Pair<String, String[]>>> entry : ans.entrySet()) {
                 System.out.println("saving "+entry.getKey());
-                for (String doc : entry.getValue()) {
+                for (Pair<String, String[]> doc : entry.getValue()) {
                     try {
-                        br.write(entry.getKey() + " " + "0 " + doc + " 1 42.38 mt\n");
+                        br.write(entry.getKey() + " " + "0 " + doc.getKey() + " 1 42.38 mt\n");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -85,13 +87,10 @@ public class Model {
 
     }
 
-    public Map<String, List<String>> searchByQuery_File(Path query, boolean ifStem, boolean ifSemantic) {
-        Map<String, List<String>> ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
+    public Map<String, List<Pair<String, String[]>>> searchByQuery_File(Path query, boolean ifStem, boolean ifSemantic) {
+        Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
         saveQuertyOutput(ans);
         return ans;
     }
 
-    public String[] getDocumentEntities(String doc) {
-        return searcher.getDocumentEntities(doc);
-    }
 }
