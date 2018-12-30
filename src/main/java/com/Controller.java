@@ -1,6 +1,7 @@
 package com;
 
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -28,7 +29,8 @@ public class Controller {
     public TextField text_queries_path;
     public Button fileChooser_queries_file;
     public Button button_search_queries_file;
-    public CheckComboBox comboBox_cities;
+    public Button button_search_query;
+    public CheckComboBox<String> comboBox_cities;
     Model model = new Model();
     public Button fileChooser_stop_words;
     public Button fileChooser_postings_out;
@@ -44,7 +46,7 @@ public class Controller {
     public CheckBox checkBox_stemming_Q;
     public CheckBox checkBox_semantic;
     public GridPane data;
-    public ComboBox<String> comboBox_languages;
+    public CheckComboBox<String> comboBox_languages;
 
     private String lastPath;
     public Map<String, String> map;
@@ -55,9 +57,7 @@ public class Controller {
         button_reset.setDisable(true);
         button_loadDictionary.setDisable(true);
         button_showDictionary.setDisable(true);
-        comboBox_languages.setDisable(true);
         text_queries_path.setText("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\queries.txt");
-        button_search_queries_file.setDisable(false);
     }
 
     /**
@@ -130,17 +130,13 @@ public class Controller {
             button_reset.setDisable(false);//after indexing w can reset the files
             button_loadDictionary.setDisable(false);
             button_showDictionary.setDisable(false);
-
-            for (String language : model.readFile.languages) {//show te language
-                comboBox_languages.getItems().add(language);
-            }
-            comboBox_languages.setDisable(false);//after add all language we can show them
             int numberOfindexDoc = model.readFile.parser.indexer.docAndexed.get();
             int uniqueTerm = model.readFile.parser.indexer.uniqueTerm.get();
             StringBuilder showText = new StringBuilder();
             showText.append("The numbers of documents indexed: ").append(numberOfindexDoc).append("\n")
                     .append("The number of unique terms: ").append(uniqueTerm).append("\n").append("The time is takes: ").append(CreateIndexTime).append(" sec");
             model.initSearch(lastPath + "\\" + (checkBox_stemming_IN.isSelected() ? "stem" : "nostem"));
+            setDisableToFalse();
             comboBox_cities.getItems().clear();
 //            comboBox_cities.getItems().
 
@@ -231,15 +227,27 @@ public class Controller {
 //        File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
 //        if (file == null)
 //            return;
-        text_postings_in.setText("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\ppart3\\nostem");
+        text_postings_in.setText("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\reallylastp\\nostem");
         //Todo open "wait..." window with text: "loading..."
         lastPath = text_postings_in.getText();
         model.initSearch(text_postings_in.getText());
+        for (String city : model.searcher.cities) {//show the city
+            comboBox_cities.getItems().add(city);
+        }
+        for(String language : model.searcher.languages)
+        {
+            comboBox_languages.getItems().add(language);
+        }
+        setDisableToFalse();
     }
 
     public void search_query(ActionEvent actionEvent) {
-        model.searchByQuery(text_query.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected());
-
+        ObservableList<String> cities_Chosen = comboBox_cities.getItems();
+        HashSet<String> cities = new HashSet<>(cities_Chosen);
+//        ObservableList<String> languages_Chosen = comboBox_cities.getItems();
+//        HashSet<String> languages = new HashSet<>(languages_Chosen);
+        HashSet<String> languages = new HashSet<>();
+        model.searchByQuery(text_query.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(),cities,languages);
     }
 
     public void open_fileChooser_queries_file(ActionEvent actionEvent) {
@@ -304,7 +312,12 @@ public class Controller {
     }
 
     public void search_queries_file(ActionEvent actionEvent) {
-        Map<String, List<Pair<String, String[]>>> results = model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected());
+        ObservableList<String> cities_Chosen = comboBox_cities.getCheckModel().getCheckedItems();
+        HashSet<String> cities = new HashSet<>(cities_Chosen);
+//        ObservableList<String> languages_Chosen = comboBox_cities.getItems();
+//        HashSet<String> languages = new HashSet<>(languages_Chosen);
+        HashSet<String> languages = new HashSet<>();
+        Map<String, List<Pair<String, String[]>>> results = model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(),cities,languages);
 
         TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -373,5 +386,19 @@ public class Controller {
         stage.setTitle(results.size() + " query's results");
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.show();
+    }
+
+    private void setDisableToFalse()
+    {
+        button_search_queries_file.setDisable(false);
+        button_search_query.setDisable(false);
+        text_query.setDisable(false);
+        text_queries_path.setDisable(false);
+        fileChooser_queries_file.setDisable(false);
+        checkBox_stemming_Q.setDisable(false);
+        checkBox_semantic.setDisable(false);
+        comboBox_cities.setDisable(false);
+        comboBox_languages.setDisable(false);
+
     }
 }

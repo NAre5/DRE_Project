@@ -18,7 +18,7 @@ public class Model {
      * the main object
      */
     ReadFile readFile;
-    private Searcher searcher;
+    Searcher searcher;
 
     public void startIndexing(String corpusPath, String stopWordsPath, String postingsPath, boolean ifStem) {
         readFile = new ReadFile(corpusPath, stopWordsPath, postingsPath, ifStem);
@@ -43,14 +43,14 @@ public class Model {
         searcher = new Searcher(postings_dir);
     }
 
-    public void searchByQuery(String query, boolean ifStem, boolean ifSemantic) {
-        Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
+    public void searchByQuery(String query, boolean ifStem, boolean ifSemantic,HashSet<String> cities,HashSet<String> languages) {
+        Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, cities,languages);
 //        saveQueryOutput(ans);
     }
 
     public void saveQueryOutput(Map<String, List<Pair<String, String[]>>> ans, File file) {
         System.out.println("Saving query");
-//        File file = new File("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\query5.txt");
+//        File file = new File("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\query1.txt");
         try {
             file.createNewFile();
         } catch (IOException e) {
@@ -87,8 +87,8 @@ public class Model {
 
     }
 
-    public Map<String, List<Pair<String, String[]>>> searchByQuery_File(Path query, boolean ifStem, boolean ifSemantic) {
-        Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, new HashSet<>());
+    public Map<String, List<Pair<String, String[]>>> searchByQuery_File(Path query, boolean ifStem, boolean ifSemantic,HashSet<String> cities,HashSet<String> languages) {
+        Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, cities,languages);
 //        saveQueryOutput(ans);
         return ans;
     }

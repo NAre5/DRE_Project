@@ -20,6 +20,8 @@ public class Searcher {
     private String postings_dir;
     private HashMap<String, String> documents = new HashMap<>();
     private HashMap<String, String> dictionary = new HashMap<>();
+    HashSet<String> cities = new HashSet<>();
+    HashSet<String> languages = new HashSet<>();
     private long sumOfDocLenth = 0;
     private int numOfdoc = 0;
 
@@ -39,15 +41,19 @@ public class Searcher {
             Close.close(br);
         }
         documents = new HashMap<>(MapSaver.loadMap(postings_dir + "\\documents"));
-        for (Map.Entry<String, String> entry : documents.entrySet())
-            sumOfDocLenth += Long.parseLong(entry.getValue().split(";")[2]);
+        for (Map.Entry<String, String> entry : documents.entrySet()) {
+            String[] docInfo = entry.getValue().split(";");
+            sumOfDocLenth += Long.parseLong(docInfo[2]);
+            cities.add(docInfo[4]);
+            languages.add(docInfo[5]);
+        }
         numOfdoc = documents.size();
 
     }
 
-    public Map<String, List<Pair<String,String[]>>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
+    public Map<String, List<Pair<String, String[]>>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities, HashSet<String> languages) {
         dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\" + (ifStem ? "stem" : "nostem") + "\\dic"));//Todo replace
-        cQuery cquery = new cQuery(String.valueOf(Math.random() * 1000), query, cities);//Todo change ID
+        cQuery cquery = new cQuery(String.valueOf(Math.random() * 1000), query, cities, languages);//Todo change ID
         cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
 
         if (ifSemantic) {
@@ -77,27 +83,26 @@ public class Searcher {
                 return (o2.getValue()).compareTo(o1.getValue());
             }
         });
-        List<Pair<String,String[]>> temp = new LinkedList<>();
+        List<Pair<String, String[]>> temp = new LinkedList<>();
         int i = 50;
         for (Map.Entry<String, Double> aa : list) {
             if (aa.getValue() > 0) {
-                temp.add(new Pair<>(documents.get(aa.getKey()).split(";")[0],getDocumentEntities(aa.getKey())));
+                temp.add(new Pair<>(documents.get(aa.getKey()).split(";")[0], getDocumentEntities(aa.getKey())));
                 i--;
-            }
-            else
+            } else
                 break;
             if (i == 0)
                 break;
         }
-        Map<String, List<Pair<String,String[]>>> map = new TreeMap<>();
+        Map<String, List<Pair<String, String[]>>> map = new TreeMap<>();
         map.put(cquery.ID, temp);
         return map;
     }
 
-    public Map<String, List<Pair<String,String[]>>> search(Path path, boolean ifStem, boolean ifSemantic, HashSet<String> cities) {
+    public Map<String, List<Pair<String, String[]>>> search(Path path, boolean ifStem, boolean ifSemantic, HashSet<String> cities, HashSet<String> languages) {
 //        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic" + (ifStem ? "stem" : "nostem")));//Todo replace
         dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));//Todo replace
-        Map<String, List<Pair<String,String[]>>> relevantDocToQuery = new TreeMap<>();
+        Map<String, List<Pair<String, String[]>>> relevantDocToQuery = new TreeMap<>();
         Document document = null;
         try {
             document = Jsoup.parse(new String(Files.readAllBytes(path)));
@@ -105,7 +110,7 @@ public class Searcher {
             e.printStackTrace();
         }
 //        System.out.println(document);
-        StringBuilder sb =new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         Elements queries = document.getElementsByTag("top");
         for (Element qElement : queries) {
             String qid = qElement.getElementsByTag("num").get(0).childNode(0).toString().trim().split(":")[1];
@@ -113,7 +118,7 @@ public class Searcher {
             String qdesc = qElement.getElementsByTag("desc").get(0).childNode(0).toString().trim().split(":")[1];
             String qnarr = qElement.getElementsByTag("narr").get(0).text();
 //            System.out.println();
-            cQuery cquery = new cQuery(qid, qtitle + " " + qdesc, cities);
+            cQuery cquery = new cQuery(qid, qtitle + " " + qdesc, cities, languages);
             cquery.description = qdesc;
             cquery.narrative = qnarr;
 
@@ -146,14 +151,13 @@ public class Searcher {
                     return (o2.getValue()).compareTo(o1.getValue());
                 }
             });
-            List<Pair<String,String[]>> temp = new LinkedList<>();
+            List<Pair<String, String[]>> temp = new LinkedList<>();
             int i = 50;
             for (Map.Entry<String, Double> aa : list) {
                 if (aa.getValue() > 0) {//todo maybe if we arrive to 0 we can finish the for because it sort
-                    temp.add(new Pair<>(documents.get(aa.getKey()).split(";")[0],getDocumentEntities(aa.getKey())));
+                    temp.add(new Pair<>(documents.get(aa.getKey()).split(";")[0], getDocumentEntities(aa.getKey())));
                     i--;
-                }
-                else
+                } else
                     break;
                 if (i == 0)
                     break;
@@ -165,6 +169,6 @@ public class Searcher {
 
     public String[] getDocumentEntities(String doc) {
         String entry = documents.get(doc);
-        return entry.substring(entry.lastIndexOf(";")+1).split("[, ]");
+        return entry.substring(entry.lastIndexOf(";") + 1).split("[, ]");
     }
 }

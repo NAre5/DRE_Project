@@ -33,10 +33,6 @@ public class ReadFile {
      * nunber if reader that done
      */
     private static AtomicInteger count = new AtomicInteger(0);
-    /**
-     * all languages from the corpus
-     */
-    TreeSet<String> languages = new TreeSet<>();
 
     /**
      * c'tor
@@ -121,9 +117,9 @@ public class ReadFile {
                             city = "";
                         //Todo more about the city (restcountries.eu API)
                     } else if (fElement.attr("P").equals("105")) {//language
-                        language = fElement.text();
-                        if (!language.equals("") && !Character.isDigit(language.charAt(0))) {
-                            languages.add(language);
+                        language = fElement.text().split(" ")[0];
+                        if (!(!language.equals("") && !Character.isDigit(language.charAt(0)))) {
+                            language = "";
                         }
                     }
                 }

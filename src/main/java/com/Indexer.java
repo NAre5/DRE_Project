@@ -28,7 +28,7 @@ public class Indexer {
     AtomicInteger docAndexed = new AtomicInteger(0);//count the number of docs we indexed
     AtomicInteger uniqueTerm = new AtomicInteger(0);//count the number of unique term
     private AtomicInteger lastID = new AtomicInteger(0);
-    private StringBuilder documentsList = new StringBuilder();//IDnumber=docID;max_tf;uniqueterms;city;language;title
+    private StringBuilder documentsList = new StringBuilder();//IDnumber=docID;max_tf;docLenth;uniqueterms;city;language;title;bigWords
     private CityAPI api = new CityAPI();
     boolean ifStem;
     private LinkedHashSet<String> hash;

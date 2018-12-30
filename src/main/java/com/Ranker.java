@@ -89,6 +89,8 @@ public class Ranker {
                 String[] dataOfDoc = documents.get(docID).split(";");
                 if (!(query.cities.isEmpty() || (query.cities.contains(dataOfDoc[4]) || documentsWithCities.contains(docID))))
                     continue;
+                if(!(query.languages.isEmpty()||query.languages.contains(dataOfDoc[5])))
+                    continue;
                 String docTitle = "";//TODo after new indexing not need try and catch
                 docTitle = dataOfDoc[6];
                 if (docTitle.equals(" "))
@@ -102,7 +104,6 @@ public class Ranker {
                 double denominator = tf + k * (1 - b + b * (docLenth / avdl));
                 double bm25TodocAndTerm = numerator / denominator;
                 documentsRank.put(docID, documentsRank.getOrDefault(docName, 0.0) + bm25TodocAndTerm);
-
             }
         }
         return documentsRank;

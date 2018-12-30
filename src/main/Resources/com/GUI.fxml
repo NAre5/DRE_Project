@@ -2,7 +2,6 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -11,7 +10,6 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
-
 <?import org.controlsfx.control.CheckComboBox?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.Controller">
@@ -47,16 +45,14 @@
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
             </columnConstraints>
             <rowConstraints>
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
             </rowConstraints>
             <children>
-                <ComboBox fx:id="comboBox_languages" prefWidth="150.0" promptText="choose language" />
-                <Button fx:id="button_reset" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#reset" text="reset" GridPane.columnIndex="1" />
-                <Button fx:id="button_loadDictionary" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#loadDictionary" text="load dictionary" GridPane.columnIndex="2" />
-                <Button fx:id="button_showDictionary" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showDictionary" text="show dictionary" GridPane.columnIndex="3" />
+                <Button fx:id="button_reset" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#reset" text="reset" />
+                <Button fx:id="button_loadDictionary" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#loadDictionary" text="load dictionary" GridPane.columnIndex="1" />
+                <Button fx:id="button_showDictionary" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#showDictionary" text="show dictionary" GridPane.columnIndex="2" />
             </children>
         </GridPane>
         <Text layoutX="146.0" layoutY="55.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Document Retrival Engine" wrappingWidth="309.00000381469727">
@@ -85,8 +81,8 @@
             </rowConstraints>
             <children>
                 <Label text="Insert Query as Text:" underline="true" />
-                <TextField fx:id="text_query" GridPane.columnIndex="1" />
-                <Button fx:id="button_search_query" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#search_query" text="search query" GridPane.columnIndex="2" />
+                <TextField fx:id="text_query" disable="true" GridPane.columnIndex="1" />
+                <Button fx:id="button_search_query" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#search_query" text="search query" GridPane.columnIndex="2" />
             </children>
         </GridPane>
         <GridPane layoutX="7.0" layoutY="444.0" prefHeight="55.0" prefWidth="592.0">
@@ -100,7 +96,7 @@
             </rowConstraints>
             <children>
                 <Label text="Insert Queries as File:" underline="true" />
-                <TextField fx:id="text_queries_path" GridPane.columnIndex="1" />
+                <TextField fx:id="text_queries_path" disable="true" GridPane.columnIndex="1" />
                 <GridPane prefWidth="123.0" GridPane.columnIndex="2">
                     <columnConstraints>
                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
@@ -110,7 +106,7 @@
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                     </rowConstraints>
                     <children>
-                        <Button fx:id="fileChooser_queries_file" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#open_fileChooser_queries_file" text="select queries file" />
+                        <Button fx:id="fileChooser_queries_file" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#open_fileChooser_queries_file" text="select queries file" />
                         <Button fx:id="button_search_queries_file" disable="true" mnemonicParsing="false" onAction="#search_queries_file" prefHeight="25.0" prefWidth="126.0" text="search queries" GridPane.rowIndex="1" />
                     </children>
                 </GridPane>
@@ -126,9 +122,9 @@
                 <Font name="System Bold" size="14.0" />
             </font>
         </Label>
-        <CheckBox fx:id="checkBox_stemming_Q" layoutX="106.0" layoutY="513.0" mnemonicParsing="false" text="Stemming?" />
-        <CheckBox fx:id="checkBox_semantic" layoutX="219.0" layoutY="513.0" mnemonicParsing="false" text="Semantic?" />
-        <CheckComboBox fx:id="comboBox_cities" layoutX="351.0" layoutY="509.0" prefWidth="150.0"/>
+        <CheckBox fx:id="checkBox_stemming_Q" disable="true" layoutX="106.0" layoutY="513.0" mnemonicParsing="false" text="Stemming?" />
+        <CheckBox fx:id="checkBox_semantic" disable="true" layoutX="219.0" layoutY="513.0" mnemonicParsing="false" text="Semantic?" />
+        <CheckComboBox fx:id="comboBox_cities" disable="true" layoutX="351.0" layoutY="509.0" prefWidth="150.0" />
         <!--promptText="choose cities"-->
         <GridPane layoutX="7.0" layoutY="304.0" prefHeight="38.0" prefWidth="592.0">
             <columnConstraints>
@@ -146,5 +142,6 @@
             </children>
         </GridPane>
         <Label layoutX="295.0" layoutY="434.0" text="OR" />
+      <CheckComboBox fx:id="comboBox_languages" disable="true" layoutX="351.0" layoutY="544.0" prefWidth="150.0" />
     </children>
 </AnchorPane>
