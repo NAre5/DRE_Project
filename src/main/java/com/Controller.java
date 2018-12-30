@@ -358,7 +358,9 @@ public class Controller {
         Button button = new Button("save queries results");
         button.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
-            File file = fileChooser.showOpenDialog(button.getScene().getWindow());
+            fileChooser.setInitialFileName("queries_results");
+            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("txt",".txt"));
+            File file = fileChooser.showSaveDialog(button.getScene().getWindow());
             if (file == null)
                 return;
             model.saveQueryOutput(results,file);
