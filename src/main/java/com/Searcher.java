@@ -47,15 +47,14 @@ public class Searcher {
             cities.add(docInfo[4]);
             languages.add(docInfo[5]);
         }
+        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));//Todo replace
         numOfdoc = documents.size();
 
     }
 
     public Map<String, List<Pair<String, String[]>>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities, HashSet<String> languages) {
-        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\" + (ifStem ? "stem" : "nostem") + "\\dic"));//Todo replace
-        cQuery cquery = new cQuery(String.valueOf(Math.random() * 1000), query, cities, languages);//Todo change ID
+        cQuery cquery = new cQuery(String.valueOf((int)(Math.random() * 1000)), query, cities, languages);//Todo change ID
         cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
-
         if (ifSemantic) {
             Set<String> termsCopy = new HashSet<>(cquery.terms.keySet());
             for (String s : termsCopy) {
@@ -72,7 +71,7 @@ public class Searcher {
             }
         }
 
-        Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir + "\\" + (ifStem ? "stem" : "nostem"), ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
+        Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
         // Create a list from elements of HashMap
         List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());
 
@@ -101,7 +100,6 @@ public class Searcher {
 
     public Map<String, List<Pair<String, String[]>>> search(Path path, boolean ifStem, boolean ifSemantic, HashSet<String> cities, HashSet<String> languages) {
 //        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic" + (ifStem ? "stem" : "nostem")));//Todo replace
-        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));//Todo replace
         Map<String, List<Pair<String, String[]>>> relevantDocToQuery = new TreeMap<>();
         Document document = null;
         try {
@@ -110,9 +108,11 @@ public class Searcher {
             e.printStackTrace();
         }
 //        System.out.println(document);
+        List<Thread> threads = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         Elements queries = document.getElementsByTag("top");
         for (Element qElement : queries) {
+
             String qid = qElement.getElementsByTag("num").get(0).childNode(0).toString().trim().split(":")[1];
             String qtitle = qElement.getElementsByTag("title").get(0).text();
             String qdesc = qElement.getElementsByTag("desc").get(0).childNode(0).toString().trim().split(":")[1];

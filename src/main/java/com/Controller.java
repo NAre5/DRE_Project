@@ -227,7 +227,7 @@ public class Controller {
 //        File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
 //        if (file == null)
 //            return;
-        text_postings_in.setText("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\reallylastp\\nostem");
+        text_postings_in.setText("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\plast\\nostem");
         //Todo open "wait..." window with text: "loading..."
         lastPath = text_postings_in.getText();
         model.initSearch(text_postings_in.getText());
@@ -242,12 +242,78 @@ public class Controller {
     }
 
     public void search_query(ActionEvent actionEvent) {
-        ObservableList<String> cities_Chosen = comboBox_cities.getItems();
+        ObservableList<String> cities_Chosen = comboBox_cities.getCheckModel().getCheckedItems();
         HashSet<String> cities = new HashSet<>(cities_Chosen);
-//        ObservableList<String> languages_Chosen = comboBox_cities.getItems();
-//        HashSet<String> languages = new HashSet<>(languages_Chosen);
-        HashSet<String> languages = new HashSet<>();
-        model.searchByQuery(text_query.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(),cities,languages);
+        ObservableList<String> languages_Chosen = comboBox_languages.getCheckModel().getCheckedItems();
+        HashSet<String> languages = new HashSet<>(languages_Chosen);
+        Map<String, List<Pair<String, String[]>>> results = model.searchByQuery(text_query.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(),cities,languages);
+        TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> queryNum = new TableColumn<>("query num");
+        queryNum.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getKey()));
+
+        TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> seeMore_buttons = new TableColumn<>();//Button
+
+        seeMore_buttons.setCellFactory(param -> new TableCell<Map.Entry<String, List<Pair<String, String[]>>>, String>() {
+
+            final Button btn = new Button("see more");
+
+            @Override
+            public void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    btn.setOnAction(event -> {
+                        Map.Entry<String, List<Pair<String, String[]>>> query = getTableView().getItems().get(getIndex());
+                        Stage stage = new Stage();
+                        stage.setAlwaysOnTop(false);
+                        stage.setResizable(false);
+                        stage.setTitle("query " + query.getKey());
+                        stage.initModality(Modality.APPLICATION_MODAL);
+                        ScrollPane scrollPane = new ScrollPane();
+                        TableView<Pair<String, String[]>> queryTable = getQueryTable();
+                        queryTable.getItems().addAll(query.getValue());
+
+//                        queryTable.setPrefWidth(2500);
+                        scrollPane.setContent(queryTable);
+//                        queryTable.setPrefHeight(600);
+//                        scrollPane.setPrefHeight(600);
+//                        scrollPane.setPrefWidth(800);
+                        Scene scene = new Scene(scrollPane);
+                        stage.setScene(scene);
+                        stage.show();
+                    });
+                    setGraphic(btn);
+                    setText(null);
+                }
+            }
+        });
+
+        tableView.getColumns().addAll(queryNum, seeMore_buttons);
+        tableView.getItems().addAll(results.entrySet());
+        Stage stage = new Stage();
+        stage.setResizable(true);
+        VBox vBox = new VBox();
+        Button button = new Button("save queries results");
+        button.setOnAction(event -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setInitialFileName("queries_results");
+            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("txt",".txt"));
+            File file = fileChooser.showSaveDialog(button.getScene().getWindow());
+            if (file == null)
+                return;
+            model.saveQueryOutput(results,file);
+        });
+        button.setPrefWidth(vBox.getMaxWidth());
+        button.setMaxWidth(vBox.getMaxWidth());
+//        button.setMaxWidth(vBox.widthProperty().doubleValue());
+        vBox.getChildren().addAll(button, tableView);
+        stage.setScene(new Scene(vBox));
+        stage.setTitle(results.size() + " query's results");
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.show();
     }
 
     public void open_fileChooser_queries_file(ActionEvent actionEvent) {
@@ -314,11 +380,9 @@ public class Controller {
     public void search_queries_file(ActionEvent actionEvent) {
         ObservableList<String> cities_Chosen = comboBox_cities.getCheckModel().getCheckedItems();
         HashSet<String> cities = new HashSet<>(cities_Chosen);
-//        ObservableList<String> languages_Chosen = comboBox_cities.getItems();
-//        HashSet<String> languages = new HashSet<>(languages_Chosen);
-        HashSet<String> languages = new HashSet<>();
+        ObservableList<String> languages_Chosen = comboBox_languages.getCheckModel().getCheckedItems();
+        HashSet<String> languages = new HashSet<>(languages_Chosen);
         Map<String, List<Pair<String, String[]>>> results = model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(),cities,languages);
-
         TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> queryNum = new TableColumn<>("query num");
