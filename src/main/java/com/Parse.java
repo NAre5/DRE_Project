@@ -1,6 +1,8 @@
 package com;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -43,6 +45,11 @@ public class Parse {
             String st;
             while ((st = br.readLine()) != null)
                 stopWords.add(st.toLowerCase());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            Files.copy(file.toPath(), Paths.get(outputDirectory));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -299,14 +306,14 @@ public class Parse {
 
         @Override
         public cDocument call() {
-            return (cDocument) parse(document, ifstem);
+            return (cDocument) parse(document, ifstem, stopWords);
         }
 
         public static void main(String[] args) {
 
         }
 
-        public static cItem parse(cItem item, boolean ifStem) {
+        public static cItem parse(cItem item, boolean ifStem, HashSet<String> stopWords) {
             boolean isDoc = item instanceof cDocument;
             String[] tokens = item.text.replaceAll("\\.\\.+|--+", " ").replaceAll("(?<=[0-9]),(?=[0-9])", "").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(\\?><}{_\\[\\]]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
             item.text = "";//release memory

@@ -275,12 +275,7 @@ public class Controller {
                         ScrollPane scrollPane = new ScrollPane();
                         TableView<Pair<String, String[]>> queryTable = getQueryTable();
                         queryTable.getItems().addAll(query.getValue());
-
-//                        queryTable.setPrefWidth(2500);
                         scrollPane.setContent(queryTable);
-//                        queryTable.setPrefHeight(600);
-//                        scrollPane.setPrefHeight(600);
-//                        scrollPane.setPrefWidth(800);
                         Scene scene = new Scene(scrollPane);
                         stage.setScene(scene);
                         stage.show();
@@ -358,11 +353,7 @@ public class Controller {
                         entities.setCellValueFactory(param1 -> new SimpleStringProperty(param1.getValue()));
                         queryTable.getColumns().add(entities);
                         queryTable.getItems().addAll(doc.getValue());
-//                        queryTable.setPrefWidth(2500);
                         scrollPane.setContent(queryTable);
-//                        queryTable.setPrefHeight(600);
-//                        scrollPane.setPrefHeight(600);
-//                        scrollPane.setPrefWidth(800);
                         Scene scene = new Scene(scrollPane);
                         stage.setScene(scene);
                         stage.show();

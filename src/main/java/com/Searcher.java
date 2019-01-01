@@ -24,6 +24,10 @@ public class Searcher {
     HashSet<String> languages = new HashSet<>();
     private long sumOfDocLenth = 0;
     private int numOfdoc = 0;
+    /**
+     * The stopWords
+     */
+    HashSet<String> stopWords = new HashSet<>();
 
     public Searcher(String postings_dir) {
         this.postings_dir = postings_dir;
@@ -49,12 +53,24 @@ public class Searcher {
         }
         dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));//Todo replace
         numOfdoc = documents.size();
+        File file = new File(postings_dir + "\\" + "stop_words.txt");
+        br = null;
+        try {
+            br = new BufferedReader(new FileReader(file));
+            String st;
+            while ((st = br.readLine()) != null)
+                stopWords.add(st.toLowerCase());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        stopWords.remove("between");
+        stopWords.remove("may");
 
     }
 
     public Map<String, List<Pair<String, String[]>>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities, HashSet<String> languages) {
-        cQuery cquery = new cQuery(String.valueOf((int)(Math.random() * 1000)), query, cities, languages);//Todo change ID
-        cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
+        cQuery cquery = new cQuery(String.valueOf((int) (Math.random() * 1000)), query, cities, languages);//Todo change ID
+        cquery = (cQuery) Parse.Parser.parse(cquery, ifStem, stopWords);
         if (ifSemantic) {
             Set<String> termsCopy = new HashSet<>(cquery.terms.keySet());
             for (String s : termsCopy) {
@@ -123,7 +139,7 @@ public class Searcher {
             cquery.narrative = qnarr;
 
 
-            cquery = (cQuery) Parse.Parser.parse(cquery, ifStem);
+            cquery = (cQuery) Parse.Parser.parse(cquery, ifStem, stopWords);
             if (ifSemantic) {
                 Set<String> termsCopy = new HashSet<>(cquery.terms.keySet());
                 for (String s : termsCopy) {
