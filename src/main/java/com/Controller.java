@@ -223,14 +223,14 @@ public class Controller {
     }
 
     public void choose_postings_file_and_load(ActionEvent actionEvent) {
-//        DirectoryChooser directoryChooser = new DirectoryChooser();
-//        File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
-//        if (file == null)
-//            return;
-        text_postings_in.setText("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\reallylastp\\nostem");
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
+        if (file == null)
+            return;
+//        text_postings_in.setText("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\reallylastp\\nostem");
         //Todo open "wait..." window with text: "loading..."
-        lastPath = text_postings_in.getText();
-        model.initSearch(text_postings_in.getText());
+//        lastPath = text_postings_in.getText();
+        model.initSearch(file.getPath());
         for (String city : model.searcher.cities) {//show the city
             comboBox_cities.getItems().add(city);
         }
@@ -372,7 +372,7 @@ public class Controller {
         button.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setInitialFileName("queries_results");
-            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("txt",".txt"));
+            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("text","*.txt"));
             File file = fileChooser.showSaveDialog(button.getScene().getWindow());
             if (file == null)
                 return;
