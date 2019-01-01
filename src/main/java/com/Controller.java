@@ -4,7 +4,6 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -12,12 +11,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.*;
-import javafx.util.Callback;
 import javafx.util.Pair;
 import org.controlsfx.control.CheckComboBox;
 
@@ -65,12 +61,9 @@ public class Controller {
     }
 
     /**
-     * e
      * This function we choose the stop words file
-     *
-     * @param actionEvent - press on fileChooser_stop_words
      */
-    public void choose_stop_words_file(ActionEvent actionEvent) {
+    public void choose_stop_words_file() {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(fileChooser_stop_words.getScene().getWindow());
         if (file == null)
@@ -80,10 +73,8 @@ public class Controller {
 
     /**
      * This function we choose the directory we write to ut the postings files
-     *
-     * @param actionEvent - press on fileChooser_postings
      */
-    public void choose_postings_file(ActionEvent actionEvent) {
+    public void choose_postings_file_out() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File file = directoryChooser.showDialog(fileChooser_postings_out.getScene().getWindow());
         if (file == null)
@@ -93,10 +84,8 @@ public class Controller {
 
     /**
      * This function we choose the corpus directory
-     * //     * @param actionEvent - press on fileChooser_corpus
-     * //
      */
-    public void choose_corpus(ActionEvent actionEvent) {
+    public void choose_corpus() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File file = directoryChooser.showDialog(fileChooser_corpus.getScene().getWindow());
         if (file == null)
@@ -106,10 +95,8 @@ public class Controller {
 
     /**
      * This function start the indexing process
-     *
-     * @param actionEvent - press on create button
      */
-    public void createInvertedIndex(ActionEvent actionEvent) {
+    public void createInvertedIndex() {
         if (text_corpus.getText().equals("") || text_postings_out.getText().equals("") || text_stop_words.getText().equals("")) {//check that all of fields are not empty
             showAlert(Alert.AlertType.ERROR, "Please fill all paths");
         } else {
@@ -128,8 +115,7 @@ public class Controller {
                 return;
             }
             lastPath = text_postings_out.getText();//save the last path of the last time we save the dictionary
-            Stage waitStage = new Stage();
-            raiseWaitPage(waitStage);
+            Stage waitStage = raiseWaitPage();
             Thread indexThread = new Thread(() -> {
                 long startTime = System.nanoTime();//start to calculate how much the the process takes
                 model.startIndexing(text_corpus.getText(), text_stop_words.getText(), text_postings_out.getText(), checkBox_stemming_IN.isSelected());
@@ -145,29 +131,29 @@ public class Controller {
                 model.initSearch(lastPath + "\\" + (checkBox_stemming_IN.isSelected() ? "stem" : "nostem"));
                 setDisableToFalse();
                 comboBox_cities.getItems().clear();
-//            comboBox_cities.getItems().
                 Platform.runLater(() -> showAlert(Alert.AlertType.INFORMATION, showText.toString()));
                 Platform.runLater(waitStage::close);
             });
             indexThread.start();
-//            progressBar.setVisible(false);
         }
     }
 
-    private void raiseWaitPage(Stage waitStage) {
+    private Stage raiseWaitPage() {
+        Stage waitStage = new Stage(StageStyle.UNDECORATED);
 //        waitStage.initStyle(StageStyle.UNDECORATED);
         try {
             Parent waitParent = FXMLLoader.load(this.getClass().getResource("waitPage.fxml"));
             waitStage.setScene(new Scene(waitParent));
 //            waitStage.getIcons().add(new Image(this.getClass().getResourceAsStream("tenor.gif")));
             waitStage.setResizable(false);
-//            waitStage.initModality(Modality.APPLICATION_MODAL);
-//            waitStage.setAlwaysOnTop(true);
+            waitStage.initModality(Modality.APPLICATION_MODAL);
+            waitStage.setAlwaysOnTop(true);
             waitStage.setOnCloseRequest(event -> event.consume());
             waitStage.show();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return waitStage;
     }
 
     /**
@@ -182,7 +168,10 @@ public class Controller {
         alert.show();
     }
 
-    public void loadDictionary(ActionEvent actionEvent) {
+    /**
+     * loads dictionary to memory
+     */
+    public void loadDictionary() {
         if (lastPath != null) {
             map = model.getDictionary();
             showAlert(Alert.AlertType.INFORMATION, "done loading");
@@ -192,12 +181,8 @@ public class Controller {
 
     /**
      * show the dictionay that loaded from the last path
-     * because it's took many time to load all the dic and show we show every time 50 term
-     * if press on "see more" we show 50 more (and also the previous 50 terms
-     *
-     * @param actionEvent - press on show_dictionary
      */
-    public void showDictionary(ActionEvent actionEvent) {
+    public void showDictionary() {
         if (map == null) {
             showAlert(Alert.AlertType.ERROR, "you need to load the dictionary before");
             return;
@@ -232,10 +217,8 @@ public class Controller {
 
     /**
      * reset the output dictionary and map
-     *
-     * @param actionEvent
      */
-    public void reset(ActionEvent actionEvent) {
+    public void reset() {
         model.reset();
 //        ProgressBar progressBar = new ProgressBar(0);
         button_reset.setDisable(true);
@@ -247,18 +230,23 @@ public class Controller {
 //        progressBar.setProgress();
     }
 
-    public void choose_postings_file_and_load(ActionEvent actionEvent) {
+    /**
+     * choose the postings file the user want to load
+     */
+    public void choose_postings_file_in() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
         if (file == null)
             return;
         text_postings_in.setText(file.getPath());
-        //Todo open "wait..." window with text: "loading..."
-//        lastPath = text_postings_in.getText();
-        Stage waitStage = new Stage();
-        raiseWaitPage(waitStage);
+
+    }
+
+    public void load_postings_file() {
+        Stage waitStage = raiseWaitPage();
+
         Thread initThread = new Thread(() -> {
-            model.initSearch(file.getPath());
+            model.initSearch(text_postings_in.getText());
             for (String city : model.searcher.cities) {//show the city
                 comboBox_cities.getItems().add(city);
             }
@@ -267,89 +255,11 @@ public class Controller {
             }
             setDisableToFalse();
             Platform.runLater(waitStage::close);
-//            waitStage.close();
         });
         initThread.start();
-//        try {
-//            initThread.join();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//        model.initSearch(file.getPath());
-
     }
 
-    public void search_query(ActionEvent actionEvent) {
-        ObservableList<String> cities_Chosen = comboBox_cities.getCheckModel().getCheckedItems();
-        HashSet<String> cities = new HashSet<>(cities_Chosen);
-        ObservableList<String> languages_Chosen = comboBox_languages.getCheckModel().getCheckedItems();
-        HashSet<String> languages = new HashSet<>(languages_Chosen);
-        Map<String, List<Pair<String, String[]>>> results = model.searchByQuery(text_query.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages);
-        TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
-        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> queryNum = new TableColumn<>("query num");
-        queryNum.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getKey()));
-
-        TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> seeMore_buttons = new TableColumn<>();//Button
-
-        seeMore_buttons.setCellFactory(param -> new TableCell<Map.Entry<String, List<Pair<String, String[]>>>, String>() {
-
-            final Button btn = new Button("see more");
-
-            @Override
-            public void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                    setText(null);
-                } else {
-                    btn.setOnAction(event -> {
-                        Map.Entry<String, List<Pair<String, String[]>>> query = getTableView().getItems().get(getIndex());
-                        Stage stage = new Stage();
-                        stage.setAlwaysOnTop(false);
-                        stage.setResizable(false);
-                        stage.setTitle("query " + query.getKey());
-                        stage.initModality(Modality.APPLICATION_MODAL);
-                        ScrollPane scrollPane = new ScrollPane();
-                        TableView<Pair<String, String[]>> queryTable = getQueryTable();
-                        queryTable.getItems().addAll(query.getValue());
-                        scrollPane.setContent(queryTable);
-                        Scene scene = new Scene(scrollPane);
-                        stage.setScene(scene);
-                        stage.show();
-                    });
-                    setGraphic(btn);
-                    setText(null);
-                }
-            }
-        });
-
-        tableView.getColumns().addAll(queryNum, seeMore_buttons);
-        tableView.getItems().addAll(results.entrySet());
-        Stage stage = new Stage();
-        stage.setResizable(true);
-        VBox vBox = new VBox();
-        Button button = new Button("save queries results");
-        button.setOnAction(event -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setInitialFileName("queries_results");
-            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("txt", ".txt"));
-            File file = fileChooser.showSaveDialog(button.getScene().getWindow());
-            if (file == null)
-                return;
-            model.saveQueryOutput(results, file);
-        });
-        button.setPrefWidth(vBox.getMaxWidth());
-        button.setMaxWidth(vBox.getMaxWidth());
-//        button.setMaxWidth(vBox.widthProperty().doubleValue());
-        vBox.getChildren().addAll(button, tableView);
-        stage.setScene(new Scene(vBox));
-        stage.setTitle(results.size() + " query's results");
-        stage.initModality(Modality.APPLICATION_MODAL);
-        stage.show();
-    }
-
-    public void open_fileChooser_queries_file(ActionEvent actionEvent) {
+    public void open_fileChooser_queries_file() {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(fileChooser_queries_file.getScene().getWindow());
         if (file == null)
@@ -406,79 +316,94 @@ public class Controller {
         return queryTable;
     }
 
-    public void search_queries_file(ActionEvent actionEvent) {
+    public void search_query() {
+        searchQueryByFunction(QUERY_TYPE.string);
+    }
+
+    public void search_queries_file() {
+        searchQueryByFunction(QUERY_TYPE.file);
+    }
+
+    private enum QUERY_TYPE {string, file}
+
+    private void searchQueryByFunction(QUERY_TYPE query_type) {
         ObservableList<String> cities_Chosen = comboBox_cities.getCheckModel().getCheckedItems();
         HashSet<String> cities = new HashSet<>(cities_Chosen);
         ObservableList<String> languages_Chosen = comboBox_languages.getCheckModel().getCheckedItems();
         HashSet<String> languages = new HashSet<>(languages_Chosen);
-        Map<String, List<Pair<String, String[]>>> results = model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages);
-        TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
-        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> queryNum = new TableColumn<>("query num");
-        queryNum.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getKey()));
 
-        TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> seeMore_buttons = new TableColumn<>();//Button
+        Stage waitStage = raiseWaitPage();
+        Thread searchThread = new Thread(() -> {
+            Map<String, List<Pair<String, String[]>>> results = query_type.equals(QUERY_TYPE.file) ? model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages) :
+                    (query_type.equals(QUERY_TYPE.string) ? model.searchByQuery(text_queries_path.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages) : null);
+            TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
+            tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> queryNum = new TableColumn<>("query num");
+            queryNum.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getKey()));
 
-        seeMore_buttons.setCellFactory(param -> new TableCell<Map.Entry<String, List<Pair<String, String[]>>>, String>() {
+            TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> seeMore_buttons = new TableColumn<>();//Button
 
-            final Button btn = new Button("see more");
+            seeMore_buttons.setCellFactory(param -> new TableCell<Map.Entry<String, List<Pair<String, String[]>>>, String>() {
 
-            @Override
-            public void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                    setText(null);
-                } else {
-                    btn.setOnAction(event -> {
-                        Map.Entry<String, List<Pair<String, String[]>>> query = getTableView().getItems().get(getIndex());
-                        Stage stage = new Stage();
-                        stage.setAlwaysOnTop(false);
-                        stage.setResizable(false);
-                        stage.setTitle("query " + query.getKey());
-                        stage.initModality(Modality.APPLICATION_MODAL);
-                        ScrollPane scrollPane = new ScrollPane();
-                        TableView<Pair<String, String[]>> queryTable = getQueryTable();
-                        queryTable.getItems().addAll(query.getValue());
+                final Button btn = new Button("see more");
 
-//                        queryTable.setPrefWidth(2500);
-                        scrollPane.setContent(queryTable);
-//                        queryTable.setPrefHeight(600);
-//                        scrollPane.setPrefHeight(600);
-//                        scrollPane.setPrefWidth(800);
-                        Scene scene = new Scene(scrollPane);
-                        stage.setScene(scene);
-                        stage.show();
-                    });
-                    setGraphic(btn);
-                    setText(null);
+                @Override
+                public void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        btn.setOnAction(event -> {
+                            Map.Entry<String, List<Pair<String, String[]>>> query = getTableView().getItems().get(getIndex());
+                            Stage stage = new Stage();
+                            stage.setAlwaysOnTop(false);
+                            stage.setResizable(false);
+                            stage.setTitle("query " + query.getKey());
+                            stage.initModality(Modality.APPLICATION_MODAL);
+                            ScrollPane scrollPane = new ScrollPane();
+                            TableView<Pair<String, String[]>> queryTable = getQueryTable();
+                            queryTable.getItems().addAll(query.getValue());
+                            scrollPane.setContent(queryTable);
+                            Scene scene = new Scene(scrollPane);
+                            stage.setScene(scene);
+                            stage.show();
+                        });
+                        setGraphic(btn);
+                        setText(null);
+                    }
                 }
-            }
-        });
+            });
 
-        tableView.getColumns().addAll(queryNum, seeMore_buttons);
-        tableView.getItems().addAll(results.entrySet());
-        Stage stage = new Stage();
-        stage.setResizable(true);
-        VBox vBox = new VBox();
-        Button button = new Button("save queries results");
-        button.setOnAction(event -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setInitialFileName("queries_results");
-            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("text", "*.txt"));
-            File file = fileChooser.showSaveDialog(button.getScene().getWindow());
-            if (file == null)
-                return;
-            model.saveQueryOutput(results, file);
+            tableView.getColumns().addAll(queryNum, seeMore_buttons);
+            tableView.getItems().addAll(results.entrySet());
+            Platform.runLater(() -> {
+                Stage stage = new Stage();
+
+                stage.setResizable(true);
+                VBox vBox = new VBox();
+                Button button = new Button("save queries results");
+                button.setOnAction(event -> {
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setInitialFileName("queries_results");
+                    fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("text", "*.txt"));
+                    File file = fileChooser.showSaveDialog(button.getScene().getWindow());
+                    if (file == null)
+                        return;
+                    model.saveQueryOutput(results, file);
+                });
+                button.setPrefWidth(vBox.getMaxWidth());
+                button.setMaxWidth(vBox.getMaxWidth());
+                vBox.getChildren().addAll(button, tableView);
+                stage.setScene(new Scene(vBox));
+                stage.setTitle(results.size() + " query's results");
+                stage.initModality(Modality.APPLICATION_MODAL);
+//                Platform.runLater(waitStage::close);
+                waitStage.close();
+                stage.show();
+            });
         });
-        button.setPrefWidth(vBox.getMaxWidth());
-        button.setMaxWidth(vBox.getMaxWidth());
-//        button.setMaxWidth(vBox.widthProperty().doubleValue());
-        vBox.getChildren().addAll(button, tableView);
-        stage.setScene(new Scene(vBox));
-        stage.setTitle(results.size() + " query's results");
-        stage.initModality(Modality.APPLICATION_MODAL);
-        stage.show();
+        searchThread.start();
     }
 
     private void setDisableToFalse() {
