@@ -103,39 +103,12 @@ public class Ranker {
                 double numerator = query.terms.get(queryTerm) * ((docTitle.contains(queryTerm.toUpperCase()) || docTitle.contains(queryTerm.toLowerCase().toUpperCase())) ? TITLE : 1) * (k + 1) * tf * (logMplus1 - Math.log(Integer.parseInt(dictionary.get(queryTerm))));
                 double denominator = tf + k * (1 - b + b * (docLenth / avdl));
                 double bm25TodocAndTerm = numerator / denominator;
-                documentsRank.put(docID, documentsRank.getOrDefault(docName, 0.0) + bm25TodocAndTerm);
+                documentsRank.put(docID, documentsRank.getOrDefault(docID, 0.0) + bm25TodocAndTerm);
             }
         }
         return documentsRank;
     }
 
-    public static Map<String, String[]> getLinesFromPosting(HashSet<String> terms, char firstchar, String path, boolean ifStem) {
-        Map<String, String[]> linesOfterms = new HashMap<>();
-        File file = new File(path + "\\" + firstchar);
-        BufferedReader bufferedReader = null;
-        try {
-            bufferedReader = new BufferedReader(new FileReader(file));
-            String st;
-            while ((st = bufferedReader.readLine()) != null) {
-                String term = st.substring(0, st.indexOf("~"));
-                if (terms.contains(term)) {
-                    linesOfterms.put(term, st.split("\\|"));
-                    terms.remove(term);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (bufferedReader != null) {
-                try {
-                    bufferedReader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return linesOfterms;
-    }
 
     public static String[] getDocumentEnteties(String docName) {
 

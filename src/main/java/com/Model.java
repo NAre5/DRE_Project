@@ -43,9 +43,9 @@ public class Model {
         searcher = new Searcher(postings_dir);
     }
 
-    public void searchByQuery(String query, boolean ifStem, boolean ifSemantic,HashSet<String> cities,HashSet<String> languages) {
+    public  Map<String, List<Pair<String, String[]>>> searchByQuery(String query, boolean ifStem, boolean ifSemantic,HashSet<String> cities,HashSet<String> languages) {
         Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, cities,languages);
-//        saveQueryOutput(ans);
+        return ans;
     }
 
     public void saveQueryOutput(Map<String, List<Pair<String, String[]>>> ans, File file) {
@@ -89,7 +89,6 @@ public class Model {
 
     public Map<String, List<Pair<String, String[]>>> searchByQuery_File(Path query, boolean ifStem, boolean ifSemantic,HashSet<String> cities,HashSet<String> languages) {
         Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, cities,languages);
-//        saveQueryOutput(ans);
         return ans;
     }
 

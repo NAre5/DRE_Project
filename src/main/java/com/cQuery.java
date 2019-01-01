@@ -1,5 +1,6 @@
 package com;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class cQuery extends cItem {
@@ -9,6 +10,8 @@ public class cQuery extends cItem {
     String narrative;
     HashSet<String> cities;
     HashSet<String> languages;
+    public HashMap<String, Integer> descTerms = new HashMap<>();
+
 
     public cQuery(String ID, String text, HashSet<String> cities,HashSet<String> languages) {
         super(ID, text);
