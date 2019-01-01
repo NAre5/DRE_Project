@@ -21,11 +21,15 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(this.getClass().getResource("GUI.fxml"));
+//        Parent root = FXMLLoader.load(this.getClass().getResource("waitPage.fxml"));
         primaryStage.setTitle("DRE Project");
-        primaryStage.setScene(new Scene(root, 600, 700));
+        primaryStage.setScene(new Scene(root));
         primaryStage.getIcons().add(new Image(this.getClass().getResourceAsStream("icon.png")));
+//        primaryStage.getIcons().add(new Image(this.getClass().getResourceAsStream("tenor.gif")));
         primaryStage.setResizable(true);
+//        primaryStage.setOnCloseRequest(event -> event.consume());
         primaryStage.show();
+
 
 //        TableView<String> stringTableView = new TableView<>();
 //        stringTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);

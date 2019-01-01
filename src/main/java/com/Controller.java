@@ -1,10 +1,13 @@
 package com;
 
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -19,6 +22,7 @@ import javafx.util.Pair;
 import org.controlsfx.control.CheckComboBox;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -124,24 +128,45 @@ public class Controller {
                 return;
             }
             lastPath = text_postings_out.getText();//save the last path of the last time we save the dictionary
-            long startTime = System.nanoTime();//start to calculate how much the the process takes
-            model.startIndexing(text_corpus.getText(), text_stop_words.getText(), text_postings_out.getText(), checkBox_stemming_IN.isSelected());
-            long CreateIndexTime = (System.nanoTime() - startTime) / 1000000000;
-            button_reset.setDisable(false);//after indexing w can reset the files
-            button_loadDictionary.setDisable(false);
-            button_showDictionary.setDisable(false);
-            int numberOfindexDoc = model.readFile.parser.indexer.docAndexed.get();
-            int uniqueTerm = model.readFile.parser.indexer.uniqueTerm.get();
-            StringBuilder showText = new StringBuilder();
-            showText.append("The numbers of documents indexed: ").append(numberOfindexDoc).append("\n")
-                    .append("The number of unique terms: ").append(uniqueTerm).append("\n").append("The time is takes: ").append(CreateIndexTime).append(" sec");
-            model.initSearch(lastPath + "\\" + (checkBox_stemming_IN.isSelected() ? "stem" : "nostem"));
-            setDisableToFalse();
-            comboBox_cities.getItems().clear();
+            Stage waitStage = new Stage();
+            raiseWaitPage(waitStage);
+            Thread indexThread = new Thread(() -> {
+                long startTime = System.nanoTime();//start to calculate how much the the process takes
+                model.startIndexing(text_corpus.getText(), text_stop_words.getText(), text_postings_out.getText(), checkBox_stemming_IN.isSelected());
+                long CreateIndexTime = (System.nanoTime() - startTime) / 1000000000;
+                button_reset.setDisable(false);//after indexing w can reset the files
+                button_loadDictionary.setDisable(false);
+                button_showDictionary.setDisable(false);
+                int numberOfindexDoc = model.readFile.parser.indexer.docAndexed.get();
+                int uniqueTerm = model.readFile.parser.indexer.uniqueTerm.get();
+                StringBuilder showText = new StringBuilder();
+                showText.append("The numbers of documents indexed: ").append(numberOfindexDoc).append("\n")
+                        .append("The number of unique terms: ").append(uniqueTerm).append("\n").append("The time is takes: ").append(CreateIndexTime).append(" sec");
+                model.initSearch(lastPath + "\\" + (checkBox_stemming_IN.isSelected() ? "stem" : "nostem"));
+                setDisableToFalse();
+                comboBox_cities.getItems().clear();
 //            comboBox_cities.getItems().
-
-            showAlert(Alert.AlertType.INFORMATION, showText.toString());
+                Platform.runLater(() -> showAlert(Alert.AlertType.INFORMATION, showText.toString()));
+                Platform.runLater(waitStage::close);
+            });
+            indexThread.start();
 //            progressBar.setVisible(false);
+        }
+    }
+
+    private void raiseWaitPage(Stage waitStage) {
+//        waitStage.initStyle(StageStyle.UNDECORATED);
+        try {
+            Parent waitParent = FXMLLoader.load(this.getClass().getResource("waitPage.fxml"));
+            waitStage.setScene(new Scene(waitParent));
+//            waitStage.getIcons().add(new Image(this.getClass().getResourceAsStream("tenor.gif")));
+            waitStage.setResizable(false);
+//            waitStage.initModality(Modality.APPLICATION_MODAL);
+//            waitStage.setAlwaysOnTop(true);
+            waitStage.setOnCloseRequest(event -> event.consume());
+            waitStage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -227,18 +252,31 @@ public class Controller {
         File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
         if (file == null)
             return;
-//        text_postings_in.setText("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\plast\\nostem");
+        text_postings_in.setText(file.getPath());
         //Todo open "wait..." window with text: "loading..."
 //        lastPath = text_postings_in.getText();
-        model.initSearch(file.getPath());
-        for (String city : model.searcher.cities) {//show the city
-            comboBox_cities.getItems().add(city);
-        }
-        for(String language : model.searcher.languages)
-        {
-            comboBox_languages.getItems().add(language);
-        }
-        setDisableToFalse();
+        Stage waitStage = new Stage();
+        raiseWaitPage(waitStage);
+        Thread initThread = new Thread(() -> {
+            model.initSearch(file.getPath());
+            for (String city : model.searcher.cities) {//show the city
+                comboBox_cities.getItems().add(city);
+            }
+            for (String language : model.searcher.languages) {
+                comboBox_languages.getItems().add(language);
+            }
+            setDisableToFalse();
+            Platform.runLater(waitStage::close);
+//            waitStage.close();
+        });
+        initThread.start();
+//        try {
+//            initThread.join();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//        model.initSearch(file.getPath());
+
     }
 
     public void search_query(ActionEvent actionEvent) {
@@ -246,7 +284,7 @@ public class Controller {
         HashSet<String> cities = new HashSet<>(cities_Chosen);
         ObservableList<String> languages_Chosen = comboBox_languages.getCheckModel().getCheckedItems();
         HashSet<String> languages = new HashSet<>(languages_Chosen);
-        Map<String, List<Pair<String, String[]>>> results = model.searchByQuery(text_query.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(),cities,languages);
+        Map<String, List<Pair<String, String[]>>> results = model.searchByQuery(text_query.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages);
         TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> queryNum = new TableColumn<>("query num");
@@ -295,11 +333,11 @@ public class Controller {
         button.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setInitialFileName("queries_results");
-            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("txt",".txt"));
+            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("txt", ".txt"));
             File file = fileChooser.showSaveDialog(button.getScene().getWindow());
             if (file == null)
                 return;
-            model.saveQueryOutput(results,file);
+            model.saveQueryOutput(results, file);
         });
         button.setPrefWidth(vBox.getMaxWidth());
         button.setMaxWidth(vBox.getMaxWidth());
@@ -373,7 +411,7 @@ public class Controller {
         HashSet<String> cities = new HashSet<>(cities_Chosen);
         ObservableList<String> languages_Chosen = comboBox_languages.getCheckModel().getCheckedItems();
         HashSet<String> languages = new HashSet<>(languages_Chosen);
-        Map<String, List<Pair<String, String[]>>> results = model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(),cities,languages);
+        Map<String, List<Pair<String, String[]>>> results = model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages);
         TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> queryNum = new TableColumn<>("query num");
@@ -427,11 +465,11 @@ public class Controller {
         button.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setInitialFileName("queries_results");
-            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("text","*.txt"));
+            fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("text", "*.txt"));
             File file = fileChooser.showSaveDialog(button.getScene().getWindow());
             if (file == null)
                 return;
-            model.saveQueryOutput(results,file);
+            model.saveQueryOutput(results, file);
         });
         button.setPrefWidth(vBox.getMaxWidth());
         button.setMaxWidth(vBox.getMaxWidth());
@@ -443,8 +481,7 @@ public class Controller {
         stage.show();
     }
 
-    private void setDisableToFalse()
-    {
+    private void setDisableToFalse() {
         button_search_queries_file.setDisable(false);
         button_search_query.setDisable(false);
         text_query.setDisable(false);

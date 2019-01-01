@@ -49,7 +49,7 @@ public class Parse {
             e.printStackTrace();
         }
         try {
-            Files.copy(file.toPath(), Paths.get(outputDirectory));
+            Files.copy(file.toPath(), Paths.get(outputDirectory+"\\"+ (ifStem ? "stem" : "nostem") +"\\"+ file.getName()));
         } catch (IOException e) {
             e.printStackTrace();
         }
