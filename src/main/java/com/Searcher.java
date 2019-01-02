@@ -3,19 +3,20 @@ package com;
 import javafx.util.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-
 import org.jsoup.nodes.Element;
-import org.jsoup.select.*;
+import org.jsoup.select.Elements;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
+/**
+ * This class mission is to return results(as most relevant documents) for given queries
+ */
 public class Searcher {
 
-    private HashMap<String, String[]> termToCloseTerms = new HashMap<>();
+    private HashMap<String, String[]> termToCloseTerms = new HashMap<>();//a word to 10 most related words map
     private String postings_dir;
     private HashMap<String, String> documents;
     private HashMap<String, String> dictionary;
@@ -25,6 +26,20 @@ public class Searcher {
     private int numOfDoc = 0;
     private HashSet<String> stopWords = new HashSet<>();
 
+    /**
+     * c'tor
+     * this function import all the resources needed to make a search into the memory:
+     * * documents file
+     * * semantics helper file
+     * * dictionary
+     * * corpus's cities
+     * * corpus's languages
+     * * sum of all the documents length
+     * * number of documents
+     * * stop words
+     *
+     * @param postings_dir - the stem/nostem postings file path
+     */
     public Searcher(String postings_dir) {
         this.postings_dir = postings_dir;
         BufferedReader br = null;
@@ -61,8 +76,7 @@ public class Searcher {
                 stopWords.add(st.toLowerCase());
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             Close.close(br);
         }
         stopWords.remove("between");
@@ -71,12 +85,12 @@ public class Searcher {
     }
 
     /**
-     * @param query      - query
-     * @param ifStem     -
-     * @param ifSemantic -
-     * @param cities     -
-     * @param languages  -
-     * @return
+     * @param query      - a single string query
+     * @param ifStem     - if the search is with stemming
+     * @param ifSemantic - if the search is with semantic treatment
+     * @param cities     - the cities the document should have at their "city" parameter. cities==null=>every city possible
+     * @param languages  - the languages the document should have at their "language" parameter. languages==null=>every language possible
+     * @return most relevant(50 or less) documents to the query with the given filters
      */
     public Map<String, List<Pair<String, String[]>>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities, HashSet<String> languages) {
         cQuery cquery = new cQuery(String.valueOf((int) (Math.random() * 1000)), query, cities, languages);//Todo change ID
@@ -119,6 +133,14 @@ public class Searcher {
         return map;
     }
 
+    /**
+     * @param path       - the path to the queries file
+     * @param ifStem     - if the search is with stemming
+     * @param ifSemantic - if the search is with semantic treatment
+     * @param cities     - the cities the document should have at their "city" parameter. cities==null=>every city possible
+     * @param languages  - the languages the document should have at their "language" parameter. languages==null=>every language possible
+     * @return most relevant(50 or less) documents to each query in the queries file with the given filters
+     */
     public Map<String, List<Pair<String, String[]>>> search(Path path, boolean ifStem, boolean ifSemantic, HashSet<String> cities, HashSet<String> languages) {
         Map<String, List<Pair<String, String[]>>> relevantDocToQuery = new TreeMap<>();
         Document document = null;
@@ -197,6 +219,10 @@ public class Searcher {
         }
     }
 
+    /**
+     * @param doc - document name
+     * @return the given document most common entities
+     */
     private String[] getDocumentEntities(String doc) {
         String entry = documents.get(doc);
         return entry.substring(entry.lastIndexOf(";") + 2, entry.length() - 1).split(",");

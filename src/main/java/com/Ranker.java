@@ -81,7 +81,7 @@ public class Ranker {
                 String[] dataOfDoc = documents.get(docID).split(";");
                 if (!(query.cities.isEmpty() || (query.cities.contains(dataOfDoc[4]) || documentsWithCities.contains(docID))))
                     continue;
-                if(!(query.languages.isEmpty()||query.languages.contains(dataOfDoc[5])))
+                if (!(query.languages.isEmpty() || query.languages.contains(dataOfDoc[5])))
                     continue;
                 String docTitle = "";//TODo after new indexing not need try and catch
                 docTitle = dataOfDoc[6];
@@ -101,20 +101,25 @@ public class Ranker {
 }
 
 class ReadThread implements Callable<Map<String, String[]>> {
-    HashSet<String> terms;
-    char firstchar;
+    private HashSet<String> terms;
+    private char firstChar;
     String path;
 
-    public ReadThread(HashSet<String> terms, char firstchar, String path) {
+    /**
+     * @param terms     - terms should retrieve
+     * @param firstChar - the terms first letter
+     * @param path      - the path to the postings directory
+     */
+    ReadThread(HashSet<String> terms, char firstChar, String path) {
         this.terms = terms;
-        this.firstchar = firstchar;
+        this.firstChar = firstChar;
         this.path = path;
     }
 
     @Override
     public Map<String, String[]> call() {
-        Map<String, String[]> linesOfterms = new HashMap<>();
-        File file = new File(path + "\\" + firstchar);
+        Map<String, String[]> linesOfTerms = new HashMap<>();
+        File file = new File(path + "\\" + firstChar);
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(new FileReader(file));
@@ -122,7 +127,7 @@ class ReadThread implements Callable<Map<String, String[]>> {
             while ((st = bufferedReader.readLine()) != null && !terms.isEmpty()) {
                 String term = st.substring(0, st.indexOf("~"));
                 if (terms.contains(term)) {
-                    linesOfterms.put(term, st.split("\\|"));
+                    linesOfTerms.put(term, st.split("\\|"));
                     terms.remove(term.toLowerCase());
                     terms.remove(term.toUpperCase());
                 }
@@ -138,6 +143,6 @@ class ReadThread implements Callable<Map<String, String[]>> {
                 }
             }
         }
-        return linesOfterms;
+        return linesOfTerms;
     }
 }

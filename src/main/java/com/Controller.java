@@ -23,6 +23,11 @@ import java.util.*;
 
 public class Controller {
 
+    private Model model = new Model();
+    private String lastPath;
+    public Map<String, String> currentDictionary;
+
+    //fxml bonded variables
     public Button fileChooser_postings_in;
     public TextField text_postings_in;
     public TextField text_queries_path;
@@ -30,7 +35,6 @@ public class Controller {
     public Button button_search_queries_file;
     public Button button_search_query;
     public CheckListView<String> checkListView_cities;
-    Model model = new Model();
     public Button fileChooser_stop_words;
     public Button fileChooser_postings_out;
     public Button fileChooser_corpus;
@@ -46,10 +50,7 @@ public class Controller {
     public CheckBox checkBox_semantic;
     public GridPane data;
     public CheckListView<String> checkListView_languages;
-
-    private String lastPath;
-    public Map<String, String> map;
-
+    //
 
     @FXML
     public void initialize() {
@@ -155,7 +156,7 @@ public class Controller {
      */
     public void loadDictionary() {
         if (lastPath != null) {
-            map = model.getDictionary();
+            currentDictionary = model.getDictionary();
             showAlert(Alert.AlertType.INFORMATION, "done loading");
         } else
             showAlert(Alert.AlertType.ERROR, "You need to start indexing before you can load dictionary.");
@@ -165,7 +166,7 @@ public class Controller {
      * show the dictionay that loaded from the last path
      */
     public void showDictionary() {
-        if (map == null) {
+        if (currentDictionary == null) {
             showAlert(Alert.AlertType.ERROR, "you need to load the dictionary before");
             return;
         }
@@ -185,7 +186,7 @@ public class Controller {
         term.setCellValueFactory(new PropertyValueFactory<Pair<String, String>, String>("key"));
         cf.setCellValueFactory(new PropertyValueFactory<Pair<String, String>, Button>("value"));
 
-        for (Map.Entry<String, String> entry : map.entrySet()) {
+        for (Map.Entry<String, String> entry : currentDictionary.entrySet()) {
             dictionary.getItems().add(new Pair<>(entry.getKey(), entry.getValue()));
         }
 
@@ -212,22 +213,17 @@ public class Controller {
 //        progressBar.setProgress();
     }
 
-
-
-
-
-
     /**
      * choose the postings file the user want to load
      */
     public void choose_postings_file_in() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        showAlert(Alert.AlertType.WARNING,"please choose \"stem\" or \"nostem\" directory");
+        showAlert(Alert.AlertType.WARNING, "please choose \"stem\" or \"nostem\" directory");
         File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
         if (file == null)
             return;
         if (!file.getName().endsWith("nostem") && !file.getName().endsWith("stem"))
-            showAlert(Alert.AlertType.ERROR,"chosen directory should be \"stem\" or \"nostem\" directory");
+            showAlert(Alert.AlertType.ERROR, "chosen directory should be \"stem\" or \"nostem\" directory");
         else
             text_postings_in.setText(file.getPath());
     }
