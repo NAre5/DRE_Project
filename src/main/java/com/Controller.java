@@ -412,7 +412,7 @@ public class Controller {
 
             tableView.getColumns().addAll(queryNum, seeMore_buttons);
             Map<String, List<Pair<String, String[]>>> results = query_type.equals(QUERY_TYPE.file) ? model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages) :
-                    (query_type.equals(QUERY_TYPE.string) ? model.searchByQuery(text_queries_path.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages) : null);
+                    (query_type.equals(QUERY_TYPE.string) ? model.searchByQuery(text_query.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages) : null);
             tableView.getItems().addAll(results.entrySet());
             Platform.runLater(() -> {
                 Stage stage = new Stage();
