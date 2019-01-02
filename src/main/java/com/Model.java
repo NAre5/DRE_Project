@@ -89,7 +89,6 @@ public class Model {
      * @param file - output file
      */
     public void saveQueryOutput(Map<String, List<Pair<String, String[]>>> ans, File file) {
-        System.out.println("Saving query");
         try {
             file.createNewFile();
         } catch (IOException e) {
@@ -99,7 +98,6 @@ public class Model {
         try {
             br = new BufferedWriter(new FileWriter(file, true));
             for (Map.Entry<String, List<Pair<String, String[]>>> entry : ans.entrySet()) {
-                System.out.println("saving " + entry.getKey());
                 for (Pair<String, String[]> doc : entry.getValue()) {
                     try {
                         br.write(entry.getKey() + " " + "0 " + doc.getKey() + " 1 42.38 mt\n");

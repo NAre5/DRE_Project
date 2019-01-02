@@ -129,8 +129,22 @@ public class Controller {
                 showText.append("The numbers of documents indexed: ").append(numberOfindexDoc).append("\n")
                         .append("The number of unique terms: ").append(uniqueTerm).append("\n").append("The time is takes: ").append(CreateIndexTime).append(" sec");
                 model.initSearch(lastPath + "\\" + (checkBox_stemming_IN.isSelected() ? "stem" : "nostem"));
-                setDisableToFalse();
+                for (String checkedItem : checkListView_cities.getCheckModel().getCheckedItems()) {
+                    checkListView_cities.getItems().remove(checkedItem);
+                }
                 checkListView_cities.getItems().clear();
+                for (String checkedItem : checkListView_languages.getCheckModel().getCheckedItems()) {
+                    checkListView_languages.getItems().remove(checkedItem);
+                }
+                checkListView_languages.getItems().clear();
+                checkBox_stemming_Q.setSelected(checkBox_stemming_IN.isSelected());
+                for (String city : model.searcher.cities) {//show the city
+                    checkListView_cities.getItems().add(city);
+                }
+                for (String language : model.searcher.languages) {
+                    checkListView_languages.getItems().add(language);
+                }
+                setDisableToFalse();
                 Platform.runLater(() -> showAlert(Alert.AlertType.INFORMATION, showText.toString()));
                 Platform.runLater(waitStage::close);
             });
@@ -236,6 +250,16 @@ public class Controller {
 
         Thread initThread = new Thread(() -> {
             model.initSearch(text_postings_in.getText());
+            for (String checkedItem : checkListView_cities.getCheckModel().getCheckedItems()) {
+                checkListView_cities.getItems().remove(checkedItem);
+            }
+            checkListView_cities.getItems().clear();
+
+            for (String checkedItem : checkListView_languages.getCheckModel().getCheckedItems()) {
+                checkListView_languages.getItems().remove(checkedItem);
+            }
+            checkListView_languages.getItems().clear();
+
             for (String city : model.searcher.cities) {//show the city
                 checkListView_cities.getItems().add(city);
             }
