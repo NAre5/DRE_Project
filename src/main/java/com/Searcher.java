@@ -195,6 +195,6 @@ public class Searcher {
 
     public String[] getDocumentEntities(String doc) {
         String entry = documents.get(doc);
-        return entry.substring(entry.lastIndexOf(";") + 1).split("[, ]");
+        return entry.substring(entry.lastIndexOf(";") + 1).substring(1, entry.length() - 1).split(", ");
     }
 }
