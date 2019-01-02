@@ -114,7 +114,6 @@ public class ReadFile {
                             city = city.split(" ")[0].toUpperCase();
                         else
                             city = "";
-                        //Todo more about the city (restcountries.eu API)
                     } else if (fElement.attr("P").equals("105")) {//language
                         language = fElement.text().split(" ")[0];
                         if (!(!language.equals("") && !Character.isDigit(language.charAt(0)))) {
