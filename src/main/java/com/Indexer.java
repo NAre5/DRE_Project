@@ -278,7 +278,8 @@ public class Indexer {
         StringBuilder citiesText = new StringBuilder();
         for (Map.Entry<String, StringBuilder> sb : cities.entrySet())
             citiesText.append(sb.getKey() + "~").append(sb.getValue()).append("\n");
-        citiesText.setLength(citiesText.length() - 1);
+        if (citiesText.length() > 0)
+            citiesText.setLength(citiesText.length() - 1);
         Thread thread = new Thread(new WriterThread(mutexOnFiles[28], mutexOnLists[28], mapper.get("cities"), citiesText));
         thread.start();
         try {
@@ -289,6 +290,7 @@ public class Indexer {
         waitingRecords.clear();
         documentsList.setLength(0);
         cities.clear();
+        lastID.set(0);
 
     }
 
@@ -381,8 +383,8 @@ public class Indexer {
             File file = new File(d_path);
             File[] list_file = file.listFiles();
             for (File file1 : list_file) {
-                File filed = new File(String.valueOf(file1.toPath()));
-                boolean b = filed.delete();
+                boolean b = file1.delete();
+                System.out.println(b);
             }
             dictionary.clear();
             dictionaryTF.clear();

@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 
 public class Ranker {
 
-    public static Map<String, Double> rank(cQuery query, String d_path, boolean ifStem, HashMap<String, String> documents, HashMap<String, String> dictionary, int numOfdoc, long sumOfDocLenth) {
+    public static Map<String, Double> rank(cQuery query, String d_path, HashMap<String, String> documents, HashMap<String, String> dictionary, int numOfdoc, long sumOfDocLenth) {
         ExecutorService reader_pool = Executors.newCachedThreadPool();//Todo change to limit (8) threads?
         HashMap<String, Double> documentsRank = new HashMap<>();
         HashMap<String, String[]> termToDocTf = new HashMap<>();
@@ -24,8 +24,7 @@ public class Ranker {
         List<Future<Map<String, String[]>>> futuresCities = new LinkedList<>();
 
         for (Character ch : querytermOfChar.keySet()) {//start to search for lines of each term in the query
-//            termToDocTf.putAll(getLinesFromPosting(querytermOfChar.get(ch), ch, d_path, ifStem));
-            Future<Map<String, String[]>> future = reader_pool.submit(new ReadThread(querytermOfChar.get(ch), ch, d_path, ifStem));
+            Future<Map<String, String[]>> future = reader_pool.submit(new ReadThread(querytermOfChar.get(ch), ch, d_path));
             futuresTerms.add(future);
         }
 
@@ -40,16 +39,9 @@ public class Ranker {
             setOfcities.add(city.toLowerCase());
             citytermOfChar.put(firstChar, setOfcities);
         }
-
         for (Character ch : citytermOfChar.keySet()) {//start the search of every set of cities.
-            Future<Map<String, String[]>> future = reader_pool.submit(new ReadThread(citytermOfChar.get(ch), ch, d_path, ifStem));
+            Future<Map<String, String[]>> future = reader_pool.submit(new ReadThread(citytermOfChar.get(ch), ch, d_path));
             futuresCities.add(future);
-//            Map<String, String[]> citiesOfChar = getLinesFromPosting(citytermOfChar.get(ch), ch, d_path, ifStem);
-//            for (Map.Entry<String, String[]> entry : citiesOfChar.entrySet()) {
-//                for (int i = 1; i < entry.getValue().length; i++) {
-//                    documentsWithCities.add(entry.getValue()[i].split(";")[0]);
-//                }
-//            }
         }
 
         for (Future<Map<String, String[]>> future : futuresTerms) {//collect the line of the terms
@@ -77,8 +69,8 @@ public class Ranker {
         reader_pool.shutdown();
         double avdl = (double) sumOfDocLenth / numOfdoc;
         double logMplus1 = Math.log(numOfdoc + 1);
-        final double b = 0.5;
-        final double k = 1.4;
+        final double b = 0.4;
+        final double k = 1.3;
         final double TITLE = 5;
         for (String queryTerm : query.terms.keySet()) {
             if (!dictionary.containsKey(queryTerm))//TODO check if we need case sensitive
@@ -96,10 +88,7 @@ public class Ranker {
                 if (docTitle.equals(" "))
                     docTitle = "";
                 int tf = Integer.parseInt(docTF[i].split(";")[1]);
-                String docName = dataOfDoc[0];
                 int docLenth = Integer.parseInt(dataOfDoc[2]);
-//                if (docTitle.contains(queryTerm.toUpperCase()))
-//                    System.out.println();
                 double numerator = query.terms.get(queryTerm) * ((docTitle.contains(queryTerm.toUpperCase()) || docTitle.contains(queryTerm.toLowerCase().toUpperCase())) ? TITLE : 1) * (k + 1) * tf * (logMplus1 - Math.log(Integer.parseInt(dictionary.get(queryTerm))));
                 double denominator = tf + k * (1 - b + b * (docLenth / avdl));
                 double bm25TodocAndTerm = numerator / denominator;
@@ -109,24 +98,17 @@ public class Ranker {
         return documentsRank;
     }
 
-
-    public static String[] getDocumentEnteties(String docName) {
-
-        return null;
-    }
 }
 
 class ReadThread implements Callable<Map<String, String[]>> {
     HashSet<String> terms;
     char firstchar;
     String path;
-    boolean ifStem;
 
-    public ReadThread(HashSet<String> terms, char firstchar, String path, boolean ifStem) {
+    public ReadThread(HashSet<String> terms, char firstchar, String path) {
         this.terms = terms;
         this.firstchar = firstchar;
         this.path = path;
-        this.ifStem = ifStem;
     }
 
     @Override

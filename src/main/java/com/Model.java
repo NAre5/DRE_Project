@@ -48,6 +48,11 @@ public class Model {
         return ans;
     }
 
+    public Map<String, List<Pair<String, String[]>>> searchByQuery_File(Path query, boolean ifStem, boolean ifSemantic,HashSet<String> cities,HashSet<String> languages) {
+        Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, cities,languages);
+        return ans;
+    }
+
     public void saveQueryOutput(Map<String, List<Pair<String, String[]>>> ans, File file) {
         System.out.println("Saving query");
 //        File file = new File("C:\\Users\\micha\\OneDrive\\מסמכים\\michael\\שנה ג\\אחזור מידע\\query1.txt");
@@ -87,9 +92,6 @@ public class Model {
 
     }
 
-    public Map<String, List<Pair<String, String[]>>> searchByQuery_File(Path query, boolean ifStem, boolean ifSemantic,HashSet<String> cities,HashSet<String> languages) {
-        Map<String, List<Pair<String, String[]>>> ans = searcher.search(query, ifStem, ifSemantic, cities,languages);
-        return ans;
-    }
+
 
 }

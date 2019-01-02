@@ -20,8 +20,8 @@ public class Searcher {
     private String postings_dir;
     private HashMap<String, String> documents = new HashMap<>();
     private HashMap<String, String> dictionary = new HashMap<>();
-    HashSet<String> cities = new HashSet<>();
-    HashSet<String> languages = new HashSet<>();
+    TreeSet<String> cities = new TreeSet<>();
+    TreeSet<String> languages = new TreeSet<>();
     private long sumOfDocLenth = 0;
     private int numOfdoc = 0;
     /**
@@ -48,8 +48,10 @@ public class Searcher {
         for (Map.Entry<String, String> entry : documents.entrySet()) {
             String[] docInfo = entry.getValue().split(";");
             sumOfDocLenth += Long.parseLong(docInfo[2]);
-            cities.add(docInfo[4]);
-            languages.add(docInfo[5]);
+            if (!docInfo[4].equals(" "))
+                cities.add(docInfo[4]);
+            if (!docInfo[5].equals(" "))
+                languages.add(docInfo[5]);
         }
         dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));//Todo replace
         numOfdoc = documents.size();
@@ -63,6 +65,9 @@ public class Searcher {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        finally {
+            Close.close(br);
+        }
         stopWords.remove("between");
         stopWords.remove("may");
 
@@ -74,20 +79,24 @@ public class Searcher {
         if (ifSemantic) {
             Set<String> termsCopy = new HashSet<>(cquery.terms.keySet());
             for (String s : termsCopy) {
+//                if (termToCloseTerms.containsKey(s.toLowerCase())) {
+//                    for (String s2 : termToCloseTerms.get(s.toLowerCase())) {
+//                        if (cquery.terms.containsKey(s2.toUpperCase()))
+//                            cquery.terms.put(s2.toUpperCase(), cquery.terms.get(s2.toUpperCase()) + 1);
+//                        else if (cquery.terms.containsKey(s2.toLowerCase()))
+//                            cquery.terms.put(s2.toLowerCase(), cquery.terms.get(s2.toLowerCase()) + 1);
+//                        else
+//                            cquery.terms.put(s2.toLowerCase(), cquery.terms.get(s2.toLowerCase()) + 1);
+//                    }
+//                }
                 if (termToCloseTerms.containsKey(s.toLowerCase())) {
-                    for (String s2 : termToCloseTerms.get(s.toLowerCase())) {
-                        if (cquery.terms.containsKey(s2.toUpperCase()))
-                            cquery.terms.put(s2.toUpperCase(), cquery.terms.get(s2.toUpperCase()) + 1);
-                        else if (cquery.terms.containsKey(s2.toLowerCase()))
-                            cquery.terms.put(s2.toLowerCase(), cquery.terms.get(s2.toLowerCase()) + 1);
-                        else
-                            cquery.terms.put(s2.toLowerCase(), cquery.terms.get(s2.toLowerCase()) + 1);
-                    }
+                    cquery.terms.put(termToCloseTerms.get(s.toLowerCase())[9], cquery.terms.getOrDefault(termToCloseTerms.get(s.toLowerCase())[9], 0) + 1);
+//                        cquery.terms.put(termToCloseTerms.get(s.toLowerCase())[8], cquery.terms.getOrDefault(termToCloseTerms.get(s.toLowerCase())[8], 0) + 1);
                 }
             }
         }
 
-        Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
+        Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, documents, dictionary, numOfdoc, sumOfDocLenth);
         // Create a list from elements of HashMap
         List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());
 
@@ -123,17 +132,14 @@ public class Searcher {
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        System.out.println(document);
         List<Thread> threads = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         Elements queries = document.getElementsByTag("top");
         for (Element qElement : queries) {
-
             String qid = qElement.getElementsByTag("num").get(0).childNode(0).toString().trim().split(":")[1];
             String qtitle = qElement.getElementsByTag("title").get(0).text();
             String qdesc = qElement.getElementsByTag("desc").get(0).childNode(0).toString().trim().split(":")[1];
             String qnarr = qElement.getElementsByTag("narr").get(0).text();
-//            System.out.println();
             cQuery cquery = new cQuery(qid, qtitle + " " + qdesc, cities, languages);
             cquery.description = qdesc;
             cquery.narrative = qnarr;
@@ -143,20 +149,24 @@ public class Searcher {
             if (ifSemantic) {
                 Set<String> termsCopy = new HashSet<>(cquery.terms.keySet());
                 for (String s : termsCopy) {
+//                    if (termToCloseTerms.containsKey(s.toLowerCase())) {
+//                        for (String s2 : termToCloseTerms.get(s.toLowerCase())) {
+//                            if (cquery.terms.containsKey(s2.toUpperCase()))
+//                                cquery.terms.put(s2.toUpperCase(), cquery.terms.get(s2.toUpperCase()) + 1);
+//                            else if (cquery.terms.containsKey(s2.toLowerCase()))
+//                                cquery.terms.put(s2.toLowerCase(), cquery.terms.get(s2.toLowerCase()) + 1);
+//                            else
+//                                cquery.terms.put(s2.toLowerCase(), 1);
+//                        }
+//                    }
                     if (termToCloseTerms.containsKey(s.toLowerCase())) {
-                        for (String s2 : termToCloseTerms.get(s.toLowerCase())) {
-                            if (cquery.terms.containsKey(s2.toUpperCase()))
-                                cquery.terms.put(s2.toUpperCase(), cquery.terms.get(s2.toUpperCase()) + 1);
-                            else if (cquery.terms.containsKey(s2.toLowerCase()))
-                                cquery.terms.put(s2.toLowerCase(), cquery.terms.get(s2.toLowerCase()) + 1);
-                            else
-                                cquery.terms.put(s2.toLowerCase(), 1);
-                        }
+                        cquery.terms.put(termToCloseTerms.get(s.toLowerCase())[9], cquery.terms.getOrDefault(termToCloseTerms.get(s.toLowerCase())[9], 0) + 1);
+//                        cquery.terms.put(termToCloseTerms.get(s.toLowerCase())[8], cquery.terms.getOrDefault(termToCloseTerms.get(s.toLowerCase())[8], 0) + 1);
                     }
                 }
             }
 //            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir + "\\" + (ifStem ? "stem" : "nostem"), ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
-            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
+            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, documents, dictionary, numOfdoc, sumOfDocLenth);
             // Create a list from elements of HashMap
             List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());
 

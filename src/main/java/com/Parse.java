@@ -49,12 +49,33 @@ public class Parse {
             e.printStackTrace();
         }
         try {
-            Files.copy(file.toPath(), Paths.get(outputDirectory+"\\"+ (ifStem ? "stem" : "nostem") +"\\"+ file.getName()));
+            copyFileUsingStream(file,new File(outputDirectory+"\\"+(ifStem ? "stem" : "nostem")+"\\"+file.getName()));
         } catch (IOException e) {
             e.printStackTrace();
         }
+        finally {
+            Close.close(br);
+        }
         stopWords.remove("between");
         stopWords.remove("may");
+    }
+
+
+    private static void copyFileUsingStream(File source, File dest) throws IOException {
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            is = new FileInputStream(source);
+            os = new FileOutputStream(dest);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
+        } finally {
+            is.close();
+            os.close();
+        }
     }
 
 
@@ -309,10 +330,6 @@ public class Parse {
             return (cDocument) parse(document, ifstem, stopWords);
         }
 
-        public static void main(String[] args) {
-
-        }
-
         public static cItem parse(cItem item, boolean ifStem, HashSet<String> stopWords) {
             boolean isDoc = item instanceof cDocument;
             String[] tokens = item.text.replaceAll("\\.\\.+|--+", " ").replaceAll("(?<=[0-9]),(?=[0-9])", "").replaceAll("[\\.][ \n\t\"]|[\\|\"+&^:\t*!\\\\@#,=`~;)(\\?><}{_\\[\\]]", " ").replaceAll("n't|'(s|t|mon|d|ll|m|ve|re)", "").replaceAll("'", "").split("\n|\\s+");
@@ -406,7 +423,6 @@ public class Parse {
             }
             tokens = null;
             if (isDoc) {
-                cDocument.sumOfDoclenth.addAndGet(docLenth);
                 ((cDocument) item).docLenth = docLenth;
             }
 

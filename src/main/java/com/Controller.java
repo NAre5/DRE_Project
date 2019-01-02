@@ -57,7 +57,6 @@ public class Controller {
         button_reset.setDisable(true);
         button_loadDictionary.setDisable(true);
         button_showDictionary.setDisable(true);
-        text_queries_path.setText("C:\\Users\\erant\\Desktop\\STUDIES\\corpus\\queries.txt");
     }
 
     /**
@@ -140,7 +139,7 @@ public class Controller {
 
     private Stage raiseWaitPage() {
         Stage waitStage = new Stage(StageStyle.UNDECORATED);
-//        waitStage.initStyle(StageStyle.UNDECORATED);
+        waitStage.initStyle(StageStyle.UNDECORATED);
         try {
             Parent waitParent = FXMLLoader.load(this.getClass().getResource("waitPage.fxml"));
             waitStage.setScene(new Scene(waitParent));
@@ -224,11 +223,16 @@ public class Controller {
         button_reset.setDisable(true);
         button_loadDictionary.setDisable(true);
         button_showDictionary.setDisable(true);
-        comboBox_languages.getItems().clear();
-        comboBox_languages.setDisable(true);
+//        comboBox_languages.getItems().clear();
+//        comboBox_languages.setDisable(true);
         showAlert(Alert.AlertType.INFORMATION, "done reset");
 //        progressBar.setProgress();
     }
+
+
+
+
+
 
     /**
      * choose the postings file the user want to load
@@ -239,7 +243,6 @@ public class Controller {
         if (file == null)
             return;
         text_postings_in.setText(file.getPath());
-
     }
 
     public void load_postings_file() {
@@ -265,7 +268,6 @@ public class Controller {
         if (file == null)
             return;
         text_queries_path.setText(file.getPath());
-        button_search_queries_file.setDisable(false);
     }
 
     private TableView<Pair<String, String[]>> getQueryTable() {

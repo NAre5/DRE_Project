@@ -7,22 +7,20 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * This class represent document. here we collect all the data on File
  */
-public class cDocument extends cItem{
-//    String ID;//DOCNO the id of doc
-String title;
-//    public String text;
+public class cDocument extends cItem {
+    //    String ID;//DOCNO the id of doc
+    String title;
+    //    public String text;
     int max_tf;//the terms that appear the most in the file
     int docLenth;
     String city;
     String language;
-//    public HashMap<String, Integer> terms = new HashMap<>();
+    //    public HashMap<String, Integer> terms = new HashMap<>();
     LinkedHashSet cityPosition = new LinkedHashSet();
-    static AtomicLong sumOfDoclenth = new AtomicLong(0);
-    static AtomicInteger numOfDoc = new AtomicInteger();
 
 
     cDocument(String ID, String title, String text) {
-        super(ID,text);
+        super(ID, text);
         this.title = title;
     }
 
