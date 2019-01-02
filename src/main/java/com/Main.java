@@ -7,6 +7,9 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
+/**
+ * class for the program main run
+ */
 public class Main extends Application {
 
     @Override
@@ -19,7 +22,11 @@ public class Main extends Application {
         primaryStage.show();
     }
 
-
+    /**
+     * The main function that runs the entire program
+     *
+     * @param args - ignored
+     */
     public static void main(String[] args) {
         launch(args);
     }

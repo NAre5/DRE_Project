@@ -23,7 +23,7 @@ public class Parse {
     /**
      * if do stem to term
      */
-    boolean ifStem;
+    private boolean ifStem;
 
     Indexer indexer;
 
@@ -60,7 +60,6 @@ public class Parse {
         stopWords.remove("may");
     }
 
-
     private static void copyFileUsingStream(File source, File dest) throws IOException {
         InputStream is = null;
         OutputStream os = null;
@@ -77,7 +76,6 @@ public class Parse {
             os.close();
         }
     }
-
 
     /**
      * Do parse to document by thread and send him to andex file.

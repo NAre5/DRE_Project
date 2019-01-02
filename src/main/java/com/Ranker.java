@@ -20,7 +20,7 @@ public class Ranker {
      * @return (document : rank) map, for all the documents
      */
     public static Map<String, Double> rank(cQuery query, String d_path, HashMap<String, String> documents, HashMap<String, String> dictionary, int numOfDoc, long sumOfDocLength) {
-        ExecutorService reader_pool = Executors.newCachedThreadPool();//Todo change to limit (8) threads?
+        ExecutorService reader_pool = Executors.newCachedThreadPool();
         HashMap<String, Double> documentsRank = new HashMap<>();
         HashMap<String, String[]> termToDocTf = new HashMap<>();
         HashMap<Character, HashSet<String>> querytermOfChar = new HashMap<>();
@@ -46,10 +46,10 @@ public class Ranker {
 
         for (String city : query.cities) {//divide the cities to set of every char to make the search in one time
             Character firstChar = (Character.isLetter(city.charAt(0)) ? Character.toLowerCase(city.charAt(0)) : '_');
-            HashSet<String> setOfCities = citytermOfChar.getOrDefault(firstChar, new LinkedHashSet<>());
-            setOfCities.add(city);
-            setOfCities.add(city.toLowerCase());
-            citytermOfChar.put(firstChar, setOfCities);
+            HashSet<String> setOfcities = citytermOfChar.getOrDefault(firstChar, new LinkedHashSet<>());
+            setOfcities.add(city);
+            setOfcities.add(city.toLowerCase());
+            citytermOfChar.put(firstChar, setOfcities);
         }
         for (Character ch : citytermOfChar.keySet()) {//start the search of every set of cities.
             Future<Map<String, String[]>> future = reader_pool.submit(new ReadThread(citytermOfChar.get(ch), ch, d_path));
@@ -63,6 +63,7 @@ public class Ranker {
                 e.printStackTrace();
             }
         }
+
 
         for (Future<Map<String, String[]>> future : futuresCities) {//collect the lines of the cities
             Map<String, String[]> citiesOfChar = null;
@@ -81,18 +82,12 @@ public class Ranker {
         double avdl = (double) sumOfDocLength / numOfDoc;
         double logMplus1 = Math.log(numOfDoc + 1);
         final double b = 0.4;
-        final double k = 1.3;
+        final double k = 1.2;
         final double TITLE = 5;
         for (String queryTerm : query.terms.keySet()) {
-            String[] docTF = null;
-            if (!dictionary.containsKey(queryTerm.toLowerCase()))
-                if (!dictionary.containsKey(queryTerm.toUpperCase()))
-                    continue;
-                else
-                    docTF = termToDocTf.get(queryTerm.toUpperCase());
-            else
-                docTF = termToDocTf.get(queryTerm.toLowerCase());
-//            String[] docTF = termToDocTf.get(queryTerm);
+            if (!dictionary.containsKey(queryTerm))//
+                continue;
+            String[] docTF = termToDocTf.get(queryTerm);
             for (int i = 1; i < docTF.length; i++) {
                 String docID = docTF[i].split(";")[0];
                 String[] dataOfDoc = documents.get(docID).split(";");

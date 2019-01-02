@@ -49,7 +49,7 @@ public class Searcher {
             String st;
             while ((st = br.readLine()) != null) {
                 int index = st.indexOf('=');
-                termToCloseTerms.put(st.substring(0, index), st.substring(index + 2, st.length() - 1).split(", "));//Todo or length -2
+                termToCloseTerms.put(st.substring(0, index), st.substring(index + 2, st.length() - 1).split(", "));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -65,7 +65,7 @@ public class Searcher {
             if (!docInfo[5].equals(" "))
                 languages.add(docInfo[5]);
         }
-        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));//Todo replace
+        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));
         numOfDoc = documents.size();
         File file = new File(postings_dir + "\\" + "stop_words.txt");
         br = null;
