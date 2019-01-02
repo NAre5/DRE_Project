@@ -1,6 +1,7 @@
 package com;
 
 import sun.awt.Mutex;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -253,6 +254,8 @@ public class Indexer {
             documents_temp.delete();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            Close.close(bf);
         }
         BufferedWriter write = null;
         try {
@@ -262,12 +265,7 @@ public class Indexer {
         } catch (IOException | NullPointerException e) {
             e.printStackTrace();
         } finally {
-            if (write != null)
-                try {
-                    write.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            Close.close(write);
         }
         //write to cities//
         StringBuilder citiesText = new StringBuilder();
@@ -328,6 +326,8 @@ public class Indexer {
     private void sortFile(File file) {
         TreeMap<String, StringBuilder> words = new TreeMap<>();
         BufferedReader br = null;
+        FileWriter fileWriter = null;
+        BufferedWriter bufferedWriter = null;
         try {
             br = new BufferedReader(new FileReader(file));
             String st;
@@ -341,7 +341,7 @@ public class Indexer {
                     words.put(key, words.getOrDefault(key, new StringBuilder()).append(st.substring(index + 1)).append("|"));
             }
             br.close();
-            FileWriter fileWriter = new FileWriter(file, false);
+            fileWriter = new FileWriter(file, false);
             fileWriter.write("");
             fileWriter.close();
             StringBuilder sb = new StringBuilder();
@@ -350,12 +350,16 @@ public class Indexer {
                 value.setLength(value.length() - 1);
                 sb.append(entry.getKey()).append("~|").append(value).append('\n');
             }
-            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, true));
+            bufferedWriter = new BufferedWriter(new FileWriter(file, true));
             bufferedWriter.write(sb.toString());//write all together to reduce IO
             bufferedWriter.flush();
             bufferedWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            Close.close(br);
+            Close.close(fileWriter);
+            Close.close(bufferedWriter);
         }
     }
 
@@ -434,12 +438,7 @@ class WriterThread implements Runnable {
         } catch (IOException | NullPointerException e) {
             e.printStackTrace();
         } finally {
-            if (write != null)
-                try {
-                    write.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            Close.close(write);
         }
         listToWrite.setLength(0);//clear the list
         mutexOnFile.unlock();

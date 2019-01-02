@@ -152,13 +152,7 @@ class ReadThread implements Callable<Map<String, String[]>> {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            if (bufferedReader != null) {
-                try {
-                    bufferedReader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            Close.close(bufferedReader);
         }
         return linesOfTerms;
     }

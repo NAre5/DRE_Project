@@ -440,14 +440,13 @@ public class Controller {
      */
     private Stage raiseWaitPage() {
         Stage waitStage = new Stage(StageStyle.UNDECORATED);
-//        waitStage.initStyle(StageStyle.UNDECORATED);
         try {
             Parent waitParent = FXMLLoader.load(this.getClass().getResource("waitPage.fxml"));
             waitStage.setScene(new Scene(waitParent));
 //            waitStage.getIcons().add(new Image(this.getClass().getResourceAsStream("tenor.gif")));
             waitStage.setResizable(false);
             waitStage.initModality(Modality.APPLICATION_MODAL);
-            waitStage.setAlwaysOnTop(true);
+//            waitStage.setAlwaysOnTop(true);
             waitStage.setOnCloseRequest(event -> event.consume());
             waitStage.show();
         } catch (IOException e) {
