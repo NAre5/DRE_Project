@@ -21,34 +21,11 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(this.getClass().getResource("GUI.fxml"));
-//        Parent root = FXMLLoader.load(this.getClass().getResource("waitPage.fxml"));
         primaryStage.setTitle("DRE Project");
         primaryStage.setScene(new Scene(root));
         primaryStage.getIcons().add(new Image(this.getClass().getResourceAsStream("icon.png")));
-//        primaryStage.getIcons().add(new Image(this.getClass().getResourceAsStream("tenor.gif")));
         primaryStage.setResizable(true);
-//        primaryStage.setOnCloseRequest(event -> event.consume());
         primaryStage.show();
-
-
-//        TableView<String> stringTableView = new TableView<>();
-//        stringTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-//        TableColumn<String,String> tableColumn = new TableColumn<>();
-//        tableColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()));
-//        stringTableView.getColumns().add(tableColumn);
-//        stringTableView.getItems().addAll("dw","dww","dwww");
-//        VBox vBox = new VBox();
-//        vBox.getChildren().addAll(new Button(),stringTableView);
-////        TitledPane titledPane = new TitledPane();
-//////        titledPane.getChildrenUnmodifiable().addAll(new Button(),stringTableView);
-////        titledPane.setContent(stringTableView);
-////        anchorPane.getChildren().add(new Button());
-////        anchorPane.getChildren().add(stringTableView);
-//        Scene scene = new Scene(vBox);
-//        Stage stage = new Stage();
-//        stage.setScene(scene);
-//        stage.show();
-
     }
 
 

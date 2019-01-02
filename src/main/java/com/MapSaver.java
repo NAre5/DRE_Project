@@ -99,7 +99,7 @@ public class MapSaver {
                     e -> String.valueOf(e.getValue())));
 
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         }finally {
             if (input != null) {
                 try {

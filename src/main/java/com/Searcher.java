@@ -8,7 +8,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.*;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,22 +17,20 @@ public class Searcher {
 
     private HashMap<String, String[]> termToCloseTerms = new HashMap<>();
     private String postings_dir;
-    private HashMap<String, String> documents = new HashMap<>();
-    private HashMap<String, String> dictionary = new HashMap<>();
+    private HashMap<String, String> documents;
+    private HashMap<String, String> dictionary;
     TreeSet<String> cities = new TreeSet<>();
     TreeSet<String> languages = new TreeSet<>();
-    private long sumOfDocLenth = 0;
-    private int numOfdoc = 0;
-    /**
-     * The stopWords
-     */
-    HashSet<String> stopWords = new HashSet<>();
+    private long sumOfDocLength = 0;
+    private int numOfDoc = 0;
+    private HashSet<String> stopWords = new HashSet<>();
 
     public Searcher(String postings_dir) {
         this.postings_dir = postings_dir;
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new FileReader(new File(Searcher.class.getResource("termtoterm.properties").toURI())));
+
+            br = new BufferedReader(new InputStreamReader(Searcher.class.getResourceAsStream("termtoterm.properties")));
             String st;
             while ((st = br.readLine()) != null) {
                 int index = st.indexOf('=');
@@ -47,14 +44,14 @@ public class Searcher {
         documents = new HashMap<>(MapSaver.loadMap(postings_dir + "\\documents"));
         for (Map.Entry<String, String> entry : documents.entrySet()) {
             String[] docInfo = entry.getValue().split(";");
-            sumOfDocLenth += Long.parseLong(docInfo[2]);
+            sumOfDocLength += Long.parseLong(docInfo[2]);
             if (!docInfo[4].equals(" "))
                 cities.add(docInfo[4]);
             if (!docInfo[5].equals(" "))
                 languages.add(docInfo[5]);
         }
         dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic"));//Todo replace
-        numOfdoc = documents.size();
+        numOfDoc = documents.size();
         File file = new File(postings_dir + "\\" + "stop_words.txt");
         br = null;
         try {
@@ -73,6 +70,14 @@ public class Searcher {
 
     }
 
+    /**
+     * @param query      - query
+     * @param ifStem     -
+     * @param ifSemantic -
+     * @param cities     -
+     * @param languages  -
+     * @return
+     */
     public Map<String, List<Pair<String, String[]>>> search(String query, boolean ifStem, boolean ifSemantic, HashSet<String> cities, HashSet<String> languages) {
         cQuery cquery = new cQuery(String.valueOf((int) (Math.random() * 1000)), query, cities, languages);//Todo change ID
         cquery = (cQuery) Parse.Parser.parse(cquery, ifStem, stopWords);
@@ -96,7 +101,7 @@ public class Searcher {
             }
         }
 
-        Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, documents, dictionary, numOfdoc, sumOfDocLenth);
+        Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, documents, dictionary, numOfDoc, sumOfDocLength);
         // Create a list from elements of HashMap
         List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());
 
@@ -108,23 +113,13 @@ public class Searcher {
             }
         });
         List<Pair<String, String[]>> temp = new LinkedList<>();
-        int i = 50;
-        for (Map.Entry<String, Double> aa : list) {
-            if (aa.getValue() > 0) {
-                temp.add(new Pair<>(documents.get(aa.getKey()).split(";")[0], getDocumentEntities(aa.getKey())));
-                i--;
-            } else
-                break;
-            if (i == 0)
-                break;
-        }
+        best50Docs(list, temp);
         Map<String, List<Pair<String, String[]>>> map = new TreeMap<>();
         map.put(cquery.ID, temp);
         return map;
     }
 
     public Map<String, List<Pair<String, String[]>>> search(Path path, boolean ifStem, boolean ifSemantic, HashSet<String> cities, HashSet<String> languages) {
-//        dictionary = new HashMap<>(MapSaver.loadMap(postings_dir + "\\dic" + (ifStem ? "stem" : "nostem")));//Todo replace
         Map<String, List<Pair<String, String[]>>> relevantDocToQuery = new TreeMap<>();
         Document document = null;
         try {
@@ -165,8 +160,7 @@ public class Searcher {
                     }
                 }
             }
-//            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir + "\\" + (ifStem ? "stem" : "nostem"), ifStem, documents, dictionary, numOfdoc, sumOfDocLenth);
-            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, documents, dictionary, numOfdoc, sumOfDocLenth);
+            Map<String, Double> rankedDocuments = Ranker.rank(cquery, postings_dir, documents, dictionary, numOfDoc, sumOfDocLength);
             // Create a list from elements of HashMap
             List<Map.Entry<String, Double>> list = new LinkedList<>(rankedDocuments.entrySet());
 
@@ -178,23 +172,34 @@ public class Searcher {
                 }
             });
             List<Pair<String, String[]>> temp = new LinkedList<>();
-            int i = 50;
-            for (Map.Entry<String, Double> aa : list) {
-                if (aa.getValue() > 0) {//todo maybe if we arrive to 0 we can finish the for because it sort
-                    temp.add(new Pair<>(documents.get(aa.getKey()).split(";")[0], getDocumentEntities(aa.getKey())));
-                    i--;
-                } else
-                    break;
-                if (i == 0)
-                    break;
-            }
+            best50Docs(list, temp);
             relevantDocToQuery.put(qid, new LinkedList<>(temp));
         }
         return relevantDocToQuery;
     }
 
-    public String[] getDocumentEntities(String doc) {
+    /**
+     * take the best 50 docs from the documentToRank list(that their rank bigger then 0) and put them with their entities in temp
+     *
+     * @param documentToRank - documentToRank of doc:rank entries
+     * @param temp           -           documentToRank of doc:(doc entities array) pairs
+     */
+    private void best50Docs(List<Map.Entry<String, Double>> documentToRank, List<Pair<String, String[]>> temp) {
+        int i = 50;
+        for (Map.Entry<String, Double> aa : documentToRank) {
+            if (aa.getValue() > 0) {
+                temp.add(new Pair<>(documents.get(aa.getKey()).split(";")[0], getDocumentEntities(aa.getKey())));
+                i--;
+            } else
+                break;
+            if (i == 0)
+                break;
+        }
+    }
+
+    private String[] getDocumentEntities(String doc) {
         String entry = documents.get(doc);
-        return entry.substring(entry.lastIndexOf(";") + 1).substring(1, entry.length() - 1).split(", ");
+        return entry.substring(entry.lastIndexOf(";") + 2, entry.length() - 1).split(",");
+
     }
 }

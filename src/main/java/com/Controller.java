@@ -3,7 +3,6 @@ package com;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -15,7 +14,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.*;
 import javafx.util.Pair;
-import org.controlsfx.control.CheckComboBox;
+import org.controlsfx.control.CheckListView;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +29,7 @@ public class Controller {
     public Button fileChooser_queries_file;
     public Button button_search_queries_file;
     public Button button_search_query;
-    public CheckComboBox<String> comboBox_cities;
+    public CheckListView<String> checkListView_cities;
     Model model = new Model();
     public Button fileChooser_stop_words;
     public Button fileChooser_postings_out;
@@ -46,7 +45,7 @@ public class Controller {
     public CheckBox checkBox_stemming_Q;
     public CheckBox checkBox_semantic;
     public GridPane data;
-    public CheckComboBox<String> comboBox_languages;
+    public CheckListView<String> checkListView_languages;
 
     private String lastPath;
     public Map<String, String> map;
@@ -54,6 +53,7 @@ public class Controller {
 
     @FXML
     public void initialize() {
+
         button_reset.setDisable(true);
         button_loadDictionary.setDisable(true);
         button_showDictionary.setDisable(true);
@@ -129,30 +129,12 @@ public class Controller {
                         .append("The number of unique terms: ").append(uniqueTerm).append("\n").append("The time is takes: ").append(CreateIndexTime).append(" sec");
                 model.initSearch(lastPath + "\\" + (checkBox_stemming_IN.isSelected() ? "stem" : "nostem"));
                 setDisableToFalse();
-                comboBox_cities.getItems().clear();
+                checkListView_cities.getItems().clear();
                 Platform.runLater(() -> showAlert(Alert.AlertType.INFORMATION, showText.toString()));
                 Platform.runLater(waitStage::close);
             });
             indexThread.start();
         }
-    }
-
-    private Stage raiseWaitPage() {
-        Stage waitStage = new Stage(StageStyle.UNDECORATED);
-        waitStage.initStyle(StageStyle.UNDECORATED);
-        try {
-            Parent waitParent = FXMLLoader.load(this.getClass().getResource("waitPage.fxml"));
-            waitStage.setScene(new Scene(waitParent));
-//            waitStage.getIcons().add(new Image(this.getClass().getResourceAsStream("tenor.gif")));
-            waitStage.setResizable(false);
-            waitStage.initModality(Modality.APPLICATION_MODAL);
-            waitStage.setAlwaysOnTop(true);
-            waitStage.setOnCloseRequest(event -> event.consume());
-            waitStage.show();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return waitStage;
     }
 
     /**
@@ -164,7 +146,8 @@ public class Controller {
     private void showAlert(Alert.AlertType type, String text) {
         Alert alert = new Alert(type);
         alert.setContentText(text);
-        alert.show();
+        alert.initModality(Modality.APPLICATION_MODAL);
+        alert.showAndWait().get().getText();
     }
 
     /**
@@ -223,8 +206,8 @@ public class Controller {
         button_reset.setDisable(true);
         button_loadDictionary.setDisable(true);
         button_showDictionary.setDisable(true);
-//        comboBox_languages.getItems().clear();
-//        comboBox_languages.setDisable(true);
+        checkListView_languages.getItems().clear();
+        checkListView_languages.setDisable(true);
         showAlert(Alert.AlertType.INFORMATION, "done reset");
 //        progressBar.setProgress();
     }
@@ -239,29 +222,40 @@ public class Controller {
      */
     public void choose_postings_file_in() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
+        showAlert(Alert.AlertType.WARNING,"please choose \"stem\" or \"nostem\" directory");
         File file = directoryChooser.showDialog(fileChooser_postings_in.getScene().getWindow());
         if (file == null)
             return;
-        text_postings_in.setText(file.getPath());
+        if (!file.getName().endsWith("nostem") && !file.getName().endsWith("stem"))
+            showAlert(Alert.AlertType.ERROR,"chosen directory should be \"stem\" or \"nostem\" directory");
+        else
+            text_postings_in.setText(file.getPath());
     }
 
+    /**
+     * load part of the postings file from the path in the "text_postings_in" text field to the memory
+     */
     public void load_postings_file() {
         Stage waitStage = raiseWaitPage();
 
         Thread initThread = new Thread(() -> {
             model.initSearch(text_postings_in.getText());
             for (String city : model.searcher.cities) {//show the city
-                comboBox_cities.getItems().add(city);
+                checkListView_cities.getItems().add(city);
             }
             for (String language : model.searcher.languages) {
-                comboBox_languages.getItems().add(language);
+                checkListView_languages.getItems().add(language);
             }
+            checkBox_stemming_Q.setSelected(!text_postings_in.getText().endsWith("nostem"));
             setDisableToFalse();
             Platform.runLater(waitStage::close);
         });
         initThread.start();
     }
 
+    /**
+     * choose the queries file path
+     */
     public void open_fileChooser_queries_file() {
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(fileChooser_queries_file.getScene().getWindow());
@@ -270,6 +264,10 @@ public class Controller {
         text_queries_path.setText(file.getPath());
     }
 
+    /**
+     * @return a TableView compatible to view single query results.
+     * the table columns are the document name and a button to see the document entities
+     */
     private TableView<Pair<String, String[]>> getQueryTable() {
         TableView<Pair<String, String[]>> queryTable = new TableView<>();
         queryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -318,26 +316,41 @@ public class Controller {
         return queryTable;
     }
 
+    /**
+     * search the query from the user input option
+     */
     public void search_query() {
         searchQueryByFunction(QUERY_TYPE.string);
     }
 
+    /**
+     * search the queries from the file input option
+     */
     public void search_queries_file() {
         searchQueryByFunction(QUERY_TYPE.file);
     }
 
-    private enum QUERY_TYPE {string, file}
+    /**
+     * enum to make query search generic
+     */
+    private enum QUERY_TYPE {
+        string, file
+    }
 
+    /**
+     * generic function for both query search options
+     *
+     * @param query_type- the type of the function to apply
+     */
     private void searchQueryByFunction(QUERY_TYPE query_type) {
-        ObservableList<String> cities_Chosen = comboBox_cities.getCheckModel().getCheckedItems();
+        ObservableList<String> cities_Chosen = checkListView_cities.getCheckModel().getCheckedItems();
         HashSet<String> cities = new HashSet<>(cities_Chosen);
-        ObservableList<String> languages_Chosen = comboBox_languages.getCheckModel().getCheckedItems();
+        ObservableList<String> languages_Chosen = checkListView_languages.getCheckModel().getCheckedItems();
         HashSet<String> languages = new HashSet<>(languages_Chosen);
 
         Stage waitStage = raiseWaitPage();
         Thread searchThread = new Thread(() -> {
-            Map<String, List<Pair<String, String[]>>> results = query_type.equals(QUERY_TYPE.file) ? model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages) :
-                    (query_type.equals(QUERY_TYPE.string) ? model.searchByQuery(text_queries_path.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages) : null);
+
             TableView<Map.Entry<String, List<Pair<String, String[]>>>> tableView = new TableView<>();
             tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
             TableColumn<Map.Entry<String, List<Pair<String, String[]>>>, String> queryNum = new TableColumn<>("query num");
@@ -378,6 +391,8 @@ public class Controller {
             });
 
             tableView.getColumns().addAll(queryNum, seeMore_buttons);
+            Map<String, List<Pair<String, String[]>>> results = query_type.equals(QUERY_TYPE.file) ? model.searchByQuery_File(Paths.get(text_queries_path.getText()), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages) :
+                    (query_type.equals(QUERY_TYPE.string) ? model.searchByQuery(text_queries_path.getText(), checkBox_stemming_Q.isSelected(), checkBox_semantic.isSelected(), cities, languages) : null);
             tableView.getItems().addAll(results.entrySet());
             Platform.runLater(() -> {
                 Stage stage = new Stage();
@@ -408,16 +423,40 @@ public class Controller {
         searchThread.start();
     }
 
+    /**
+     * enables all search buttons
+     */
     private void setDisableToFalse() {
         button_search_queries_file.setDisable(false);
         button_search_query.setDisable(false);
         text_query.setDisable(false);
         text_queries_path.setDisable(false);
         fileChooser_queries_file.setDisable(false);
-        checkBox_stemming_Q.setDisable(false);
+//        checkBox_stemming_Q.setDisable(false);
         checkBox_semantic.setDisable(false);
-        comboBox_cities.setDisable(false);
-        comboBox_languages.setDisable(false);
+        checkListView_cities.setDisable(false);
+        checkListView_languages.setDisable(false);
 
+    }
+
+    /**
+     * @return a new waitPage Stage
+     */
+    private Stage raiseWaitPage() {
+        Stage waitStage = new Stage(StageStyle.UNDECORATED);
+//        waitStage.initStyle(StageStyle.UNDECORATED);
+        try {
+            Parent waitParent = FXMLLoader.load(this.getClass().getResource("waitPage.fxml"));
+            waitStage.setScene(new Scene(waitParent));
+//            waitStage.getIcons().add(new Image(this.getClass().getResourceAsStream("tenor.gif")));
+            waitStage.setResizable(false);
+            waitStage.initModality(Modality.APPLICATION_MODAL);
+            waitStage.setAlwaysOnTop(true);
+            waitStage.setOnCloseRequest(event -> event.consume());
+            waitStage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return waitStage;
     }
 }

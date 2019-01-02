@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
-<?import org.controlsfx.control.CheckComboBox?>
+<?import org.controlsfx.control.CheckListView?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.Controller">
     <GridPane layoutX="5.0" layoutY="115.0" prefHeight="85.0" prefWidth="592.0">
@@ -76,7 +76,7 @@
         </rowConstraints>
         <Label text="Insert Query as Text:" underline="true" />
         <TextField fx:id="text_query" disable="true" GridPane.columnIndex="1" />
-        <Button fx:id="button_search_query" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#search_query" text="search query" GridPane.columnIndex="2" textFill="#c41212" />
+        <Button fx:id="button_search_query" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#search_query" text="search query" textFill="#c41212" GridPane.columnIndex="2" />
     </GridPane>
     <GridPane layoutX="7.0" layoutY="444.0" prefHeight="55.0" prefWidth="592.0">
         <columnConstraints>
@@ -101,7 +101,7 @@
             <Button fx:id="button_search_queries_file" disable="true" mnemonicParsing="false" onAction="#search_queries_file" prefHeight="25.0" prefWidth="126.0" text="search queries" textFill="#c41212" GridPane.rowIndex="1" />
         </GridPane>
     </GridPane>
-    <Label layoutX="26.0" layoutY="513.0" text="options:">
+    <Label layoutX="26.0" layoutY="487.0" text="options:">
         <font>
             <Font name="System Bold" size="14.0" />
         </font>
@@ -111,9 +111,9 @@
             <Font name="System Bold" size="14.0" />
         </font>
     </Label>
-    <CheckBox fx:id="checkBox_stemming_Q" disable="true" layoutX="106.0" layoutY="513.0" mnemonicParsing="false" text="Stemming?" />
-    <CheckBox fx:id="checkBox_semantic" disable="true" layoutX="219.0" layoutY="513.0" mnemonicParsing="false" text="Semantic?" />
-    <CheckComboBox fx:id="comboBox_cities" disable="true" layoutX="322.0" layoutY="538.0" prefWidth="150.0" />
+    <CheckBox fx:id="checkBox_stemming_Q" disable="true" layoutX="106.0" layoutY="487.0" mnemonicParsing="false" text="Stemming?" />
+    <CheckBox fx:id="checkBox_semantic" disable="true" layoutX="219.0" layoutY="487.0" mnemonicParsing="false" text="Semantic?" />
+    <CheckListView fx:id="checkListView_cities" disable="true" layoutX="162.0" layoutY="512.0" prefHeight="85.0" prefWidth="146.0" />
     <!--promptText="choose cities"-->
     <GridPane layoutX="7.0" layoutY="304.0" prefHeight="55.0" prefWidth="592.0">
         <columnConstraints>
@@ -140,7 +140,7 @@
         <Label text="Load postings directory from path:" underline="true" />
     </GridPane>
     <Label layoutX="295.0" layoutY="434.0" text="OR" />
-    <CheckComboBox fx:id="comboBox_languages" disable="true" layoutX="322.0" layoutY="567.0" prefWidth="150.0" />
-    <Label layoutX="250.0" layoutY="542.0" text="Cities:" />
-    <Label layoutX="250.0" layoutY="571.0" text="Languages:" />
+    <CheckListView fx:id="checkListView_languages" disable="true" layoutX="387.0" layoutY="511.0" prefHeight="85.0" prefWidth="150.0" />
+    <Label layoutX="86.0" layoutY="516.0" text="Cities:" />
+    <Label layoutX="315.0" layoutY="515.0" text="Languages:" />
 </AnchorPane>
