@@ -4,9 +4,22 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+/**
+ *
+ */
 public class Ranker {
-
-    public static Map<String, Double> rank(cQuery query, String d_path, HashMap<String, String> documents, HashMap<String, String> dictionary, int numOfdoc, long sumOfDocLenth) {
+    /**
+     * rank all the documents according to the given query and corpus information
+     *
+     * @param query          - the query we search by
+     * @param d_path         - the postings directory path
+     * @param documents      - the documents file (as map)
+     * @param dictionary     - the dictionary (as map)
+     * @param numOfDoc       - number of docs in corpus
+     * @param sumOfDocLength - the sum of all the document's length
+     * @return (document : rank) map, for all the documents
+     */
+    public static Map<String, Double> rank(cQuery query, String d_path, HashMap<String, String> documents, HashMap<String, String> dictionary, int numOfDoc, long sumOfDocLength) {
         ExecutorService reader_pool = Executors.newCachedThreadPool();//Todo change to limit (8) threads?
         HashMap<String, Double> documentsRank = new HashMap<>();
         HashMap<String, String[]> termToDocTf = new HashMap<>();
@@ -31,13 +44,12 @@ public class Ranker {
         HashSet<String> documentsWithCities = new LinkedHashSet<>();
         HashMap<Character, HashSet<String>> citytermOfChar = new HashMap<>();
 
-        //Todo maybe because there arnt much cities unnecessary
         for (String city : query.cities) {//divide the cities to set of every char to make the search in one time
             Character firstChar = (Character.isLetter(city.charAt(0)) ? Character.toLowerCase(city.charAt(0)) : '_');
-            HashSet<String> setOfcities = citytermOfChar.getOrDefault(firstChar, new LinkedHashSet<>());
-            setOfcities.add(city);
-            setOfcities.add(city.toLowerCase());
-            citytermOfChar.put(firstChar, setOfcities);
+            HashSet<String> setOfCities = citytermOfChar.getOrDefault(firstChar, new LinkedHashSet<>());
+            setOfCities.add(city);
+            setOfCities.add(city.toLowerCase());
+            citytermOfChar.put(firstChar, setOfCities);
         }
         for (Character ch : citytermOfChar.keySet()) {//start the search of every set of cities.
             Future<Map<String, String[]>> future = reader_pool.submit(new ReadThread(citytermOfChar.get(ch), ch, d_path));
@@ -51,7 +63,6 @@ public class Ranker {
                 e.printStackTrace();
             }
         }
-
 
         for (Future<Map<String, String[]>> future : futuresCities) {//collect the lines of the cities
             Map<String, String[]> citiesOfChar = null;
@@ -67,15 +78,21 @@ public class Ranker {
             }
         }
         reader_pool.shutdown();
-        double avdl = (double) sumOfDocLenth / numOfdoc;
-        double logMplus1 = Math.log(numOfdoc + 1);
+        double avdl = (double) sumOfDocLength / numOfDoc;
+        double logMplus1 = Math.log(numOfDoc + 1);
         final double b = 0.4;
         final double k = 1.3;
         final double TITLE = 5;
         for (String queryTerm : query.terms.keySet()) {
-            if (!dictionary.containsKey(queryTerm))//TODO check if we need case sensitive
-                continue;
-            String[] docTF = termToDocTf.get(queryTerm);
+            String[] docTF = null;
+            if (!dictionary.containsKey(queryTerm.toLowerCase()))
+                if (!dictionary.containsKey(queryTerm.toUpperCase()))
+                    continue;
+                else
+                    docTF = termToDocTf.get(queryTerm.toUpperCase());
+            else
+                docTF = termToDocTf.get(queryTerm.toLowerCase());
+//            String[] docTF = termToDocTf.get(queryTerm);
             for (int i = 1; i < docTF.length; i++) {
                 String docID = docTF[i].split(";")[0];
                 String[] dataOfDoc = documents.get(docID).split(";");
@@ -83,7 +100,7 @@ public class Ranker {
                     continue;
                 if (!(query.languages.isEmpty() || query.languages.contains(dataOfDoc[5])))
                     continue;
-                String docTitle = "";//TODo after new indexing not need try and catch
+                String docTitle = "";
                 docTitle = dataOfDoc[6];
                 if (docTitle.equals(" "))
                     docTitle = "";
@@ -106,6 +123,8 @@ class ReadThread implements Callable<Map<String, String[]>> {
     String path;
 
     /**
+     * c'tor
+     *
      * @param terms     - terms should retrieve
      * @param firstChar - the terms first letter
      * @param path      - the path to the postings directory
@@ -116,6 +135,9 @@ class ReadThread implements Callable<Map<String, String[]>> {
         this.path = path;
     }
 
+    /**
+     * @return word:(the word fitted line from the postings file)
+     */
     @Override
     public Map<String, String[]> call() {
         Map<String, String[]> linesOfTerms = new HashMap<>();
